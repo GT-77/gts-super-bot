@@ -1,24 +1,23 @@
 import discord as d
-from command import commands
-import constants, responding, reacting, os
+import commands, dialogue, constants, os
 client = d.Client()
-def _evaluate(text):
-    if text.startswith(constants.prefix):
-        text = text[len(constants.prefix):].split(" ")
-        commands[text[0]](*text[1:])
+commands._command.utilities.client, commands._command.dialogue.client, commands.utilities.client, dialogue.client = (client,) * 4
+commands = commands.commands
+async def _evaluate(message):
+    if message.content.startswith(constants.prefix):
+        cm = message.content[len(constants.prefix):].split(" ")
+        await commands[cm[0]](message, *cm[1:])
         return True
-def _respond(message):
+async def _respond(message):
     if client.user in message.mentions:
-        responding(message.content)
+        await responding(message.content)
         return True
 def _react(message):
     reacting(message.content)
 @client.event
 async def on_message(message):
-    if not _evaluate(message.content):
-        if not _respond(message):
-            _react(message)
-    _react(message.content)
+    if not await _evaluate(message):
+        await _respond(message)
 @client.event
 async def on_member_join(member):
     commands["evaluate"](member.mention)
