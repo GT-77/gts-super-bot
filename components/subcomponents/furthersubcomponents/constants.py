@@ -1,0 +1,5 @@
+prefix = "7!"
+prefixBIG = ":seven: :exclamation:"
+feedbackPath = "../../../dialogue/feedback"
+replyingPath = "../../../dialogue/replying"
+logFile = "../../../logging/log alpha.txt"

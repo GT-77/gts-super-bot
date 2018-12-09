@@ -1,4 +1,5 @@
-import dialogue, utilities, constants, os
+import furthersubcomponents as fur
+client = None
 commands = dict()
 def command(name, *parameters):
     for index in range(len(parameters)):
@@ -11,13 +12,13 @@ def command(name, *parameters):
                 for parameter in parameters:
                     assert parameter[1](parameter[0])
             except AssertionError:
-                dialogue.feedback(name, "INVALID")
+                fur.feedback(name, "INVALID")
                 return
             core(message, *params)
         except Exception as ex:
-            dialogue.feedback(name, "FAIL")
+            fur.feedback(name, "FAIL")
             return
-            dialogue.feedback(name, "SUCCESS")
+            fur.feedback(name, "SUCCESS")
     if core.__doc__:
-        functionality.__doc__ = "**{}{}{}```{}```**".format(constants.prefixBIG, name, str(parameters), core.__doc__)
+        functionality.__doc__ = "**{}{}{}```{}```**".format(fur.constants.prefixBIG, name, str(parameters), core.__doc__)
     commands.update({name: functionality})
