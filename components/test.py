@@ -1,6 +1,9 @@
 import dialogue as d
-print(d.commandreplies)
+print(d.passivereplies)
 x = input()
 while x != "exit":
-    print(d.u.randomelement(['s', 'xyz', 'kek', '2b2t']))
+    x = x.split("| ")
+    print(x)
+    for i in range(50):
+        print("<G!T!S><> ", d.passivereply(x[0], x[1]))
     x = input()
