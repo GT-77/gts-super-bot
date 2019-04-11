@@ -16,6 +16,7 @@ def _understoodword(string, dictionary):
             if word in dictionary:
                 return dictionary[word]
     return dictionary["DEFAULT"]
+
 # get ready for the biggest inception of functions ever
 def _stringtoreplies(string, default):
     # turns given 'string' (what you see in dialogue.txt files) into a list of replies to actually use, relative to given 'default'
@@ -57,23 +58,24 @@ def _dictionaryofdictionariesofreplies(folderaddress):
             _adddict(returning[subfoldername[2:]], returning["DEFAULT"])
     return returning
 
-commandreplies = _dictionaryofdictionariesofreplies("dialogue/command") # dictionary containing dictionaries of replies for every given command situation
+replies = dict()
+for typeofreply in ("command", "ping", "passive"):
+    replies[typeofreply] = _dictionaryofdictionariesofreplies("dialogue/{}".format(typeofreply))
+
 def commandreply(commandname, situation):
     # returns a string of a reply sir gts can give when the command with the name 'commandname' gives out situation 'situation'
-    if commandname not in commandreplies[situation]:
+    if commandname not in replies["command"][situation]:
         commandname = "DEFAULT"
-    return u.randomelement(commandreplies[situation][commandname])
+    return u.randomelement(replies["command"][situation][commandname])
 
-pingreplies = _dictionaryofdictionariesofreplies("dialogue/ping") # dictionary with its keys being user ids and values being subscriptables containing possible replies to those users
 def pingreply(messagecontent, userid):
     # returns a string of a reply gts can give when he gets pinged, depending by who (userid)
-    if userid not in pingreplies:
+    if userid not in replies["ping"]:
         userid = "DEFAULT"
-    return u.randomelement(_understoodword(messagecontent, pingreplies[userid]))
+    return u.randomelement(_understoodword(messagecontent, replies["ping"][userid]))
 
-passivereplies = _dictionaryofdictionariesofreplies("dialogue/passive")
 def passivereply(messagecontent, userid):
     # returns an uncalled for string that gts would feel like jumping in with according to the messagecontent and who sent it
-    if userid not in passivereplies:
+    if userid not in replies["passive"]:
         userid = "DEFAULT"
-    return u.randomelement(_understoodword(messagecontent, passivereplies[userid]))
+    return u.randomelement(_understoodword(messagecontent, replies["passive"][userid]))
