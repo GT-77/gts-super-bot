@@ -57,9 +57,7 @@ def _dictionaryofdictionariesofreplies(folderaddress):
             _adddict(returning[subfoldername[2:]], returning["DEFAULT"])
     return returning
 
-commandreplies = dict() # dictionary containing dictionaries of replies for every given command situation
-for situation in ("success", "fail", "invalid"):
-    commandreplies[situation] = _dictionaryofreplies("dialogue/command/{}".format(situation))
+commandreplies = _dictionaryofdictionariesofreplies("dialogue/command") # dictionary containing dictionaries of replies for every given command situation
 def commandreply(commandname, situation):
     # returns a string of a reply sir gts can give when the command with the name 'commandname' gives out situation 'situation'
     if commandname not in commandreplies[situation]:
