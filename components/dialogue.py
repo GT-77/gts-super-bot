@@ -6,6 +6,16 @@ def _adddict(dict0, dict1):
             dict0[key] = dict1[key]
         else:
             dict0[key] += dict1[key]
+def _understoodword(string, dictionary):
+    # determines whether gts super bot  has any clue what one word in that 'string' means, and returns replies of that dictionary according to the word
+    # if gts is completely clueless about what he is seeing, this function returns replies to '"DEFAULT"'
+    # in gts language, '"DEFAULT"' means "i don't fucking know"
+    for line in string.split("\n"):
+        for word in line.split(" "):
+            word = word.lower()
+            if word in dictionary:
+                return dictionary[word]
+    return dictionary["DEFAULT"]
 # get ready for the biggest inception of functions ever
 def _stringtoreplies(string, default):
     # turns given 'string' (what you see in dialogue.txt files) into a list of replies to actually use, relative to given 'default'
@@ -47,7 +57,7 @@ def _dictionaryofdictionariesofreplies(folderaddress):
             _adddict(returning[subfoldername[2:]], returning["DEFAULT"])
     return returning
 
-commandreplies = dict() # dictionary dctionaries of replies for every given command situation
+commandreplies = dict() # dictionary containing dictionaries of replies for every given command situation
 for situation in ("success", "fail", "invalid"):
     commandreplies[situation] = _dictionaryofreplies("dialogue/command/{}".format(situation))
 def commandreply(commandname, situation):
@@ -56,24 +66,16 @@ def commandreply(commandname, situation):
         commandname = "DEFAULT"
     return u.randomelement(commandreplies[situation][commandname])
 
-pingreplies = _dictionaryofreplies("dialogue/ping") # dictionary with its keys being user ids and values being subscriptables containing possible replies to those users
-def pingreply(userid):
+pingreplies = _dictionaryofdictionariesofreplies("dialogue/ping") # dictionary with its keys being user ids and values being subscriptables containing possible replies to those users
+def pingreply(messagecontent, userid):
     # returns a string of a reply gts can give when he gets pinged, depending by who (userid)
     if userid not in pingreplies:
         userid = "DEFAULT"
-    return u.randomelement(pingreplies[userid])
+    return u.randomelement(_understoodword(messagecontent, pingreplies[userid]))
 
 passivereplies = _dictionaryofdictionariesofreplies("dialogue/passive")
 def passivereply(messagecontent, userid):
+    # returns an uncalled for string that gts would feel like jumping in with according to the messagecontent and who sent it
     if userid not in passivereplies:
         userid = "DEFAULT"
-    for line in messagecontent.split("\n"):
-        for word in line.split(" "):
-            if word.lower() in passivereplies[userid]:
-                break
-        else:
-            continue
-        break
-    else:
-        word = "DEFAULT"
-    return u.randomelement(passivereplies[userid][word])
+    return u.randomelement(_understoodword(messagecontent, passivereplies[userid]))
