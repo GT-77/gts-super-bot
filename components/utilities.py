@@ -19,3 +19,7 @@ def foldersindir(dir = "."):
 def randomelement(subscriptable):
     # returns a random element from given subscriptable
     return subscriptable[until(len(subscriptable))]
+def multipleinstances(Class, count, *args, **kwargs):
+    # yields 'count' unique 'class_' instances
+    for i in range(count):
+        yield Class(*args, **kwargs)
