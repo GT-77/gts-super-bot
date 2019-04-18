@@ -62,19 +62,19 @@ replies = dict()
 for typeofreply in ("command", "ping", "passive"):
     replies[typeofreply] = _dictionary_of_dictionaries_of_replies("dialogue/{}".format(typeofreply))
 
-def commandreply(commandname, situation):
+def command_reply(commandname, situation):
     # returns a string of a reply sir gts can give when the command with the name 'commandname' gives out situation 'situation'
     if commandname not in replies["command"][situation]:
         commandname = "DEFAULT"
     return u.randomelement(replies["command"][situation][commandname])
 
-def pingreply(messagecontent, userid):
+def ping_reply(messagecontent, userid):
     # returns a string of a reply gts can give when he gets pinged, depending by who (userid)
     if userid not in replies["ping"]:
         userid = "DEFAULT"
     return u.randomelement(_understood_word(messagecontent, replies["ping"][userid]))
 
-def passivereply(messagecontent, userid):
+def passive_reply(messagecontent, userid):
     # returns an uncalled for string that gts would feel like jumping in with according to the messagecontent and who sent it
     if userid not in replies["passive"]:
         userid = "DEFAULT"
