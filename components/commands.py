@@ -98,7 +98,10 @@ async def help_(ctx, command:CommandConverter = None):
 
 @gts.command (
     brief = "scans the server",
-    restrictions = ("can only be used by niggas with role managing permissions",)
+    restrictions = (
+        "can only be used by niggas with role managing permissions",
+        "can only be used in a server"
+    )
 )
 @has_permissions(manage_roles = True)
 @guild_only()
@@ -112,11 +115,91 @@ async def scan(ctx, *, save_file = "recent"):
     so yeah the only way to recover the contents of the old save file is to ask dad for it
     """
 
-    storage = ctx.global_database[ctx.guild.id].scans
-    for member in ctx.guild.members:
+    storage = global_database[ctx.guild.id].scans
+
+    if save_file in storage:
         del storage[save_file]
-        storage = storage[save_file]
-        storage[member.id] = " ".join(role.id for role in member.roles)
+
+    storage = storage[save_file]
+
+    for member in ctx.guild.members:
+        storage[member.id] = " ".join(str(role.id) for role in member.roles)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command (
+    aliases = [
+        "give_roles_back",
+        "rr"
+    ],
+    brief = "reroles a member",
+    restrictions = scan.options["restrictions"],
+    examples = {
+        "@HighGuard": "to rerole highguard (if it be an actual mention)",
+        "285495766179512331": "to rerole member with that id (which happens 2 b mafferozzo)"
+    }
+)
+@has_permissions(manage_roles = True)
+@guild_only()
+async def rerole(ctx, member:Member):
+    """
+    if 7!scan was executed in the server while given member was inside
+    then this command will role them precisely with the roles the member had
+    at the time of scanning
+
+    exceptionally useful for members that left and joined back roleless
+    """
+    storage = global_database[member.guild.id].scans.recent
+
+    if member.id in storage:
+        await member.edit(reason = "4 my homies", roles = filter(bool, (member.guild.get_role(int(id_)) for id_ in storage[member.id].split())))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

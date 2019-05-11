@@ -23,7 +23,7 @@ from os import remove, rmdir
 from pathlib import Path
 from shutil import rmtree
 
-from .utilities import append, lines, assure, strip
+from .utilities import append, lines, assure, strip, basic_conv
 
 
 
