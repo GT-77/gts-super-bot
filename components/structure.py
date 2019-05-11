@@ -16,20 +16,20 @@ from asyncio import sleep
 
 from discord.ext.commands import (
     Bot,
-    BadArgument, MissingRequiredArgument, CommandNotFound, CheckFailure
+    BadArgument, UserInputError, MissingRequiredArgument, CommandNotFound, CheckFailure
 )
 
 from .database import Database, GlobalDatabase
 
 from .dialogue import command_reply, ping_reply, passive_reply
 
-from .utilities import one_in, initialize_help
+from .utilities import one_in, initialize_help, formatting
 
 
 
 SITUATION_DICT = { # this dict pairs received errors received by on_command_error with corresponding command situations
     (CommandNotFound,) : "success",
-    (MissingRequiredArgument, BadArgument) : "invalid",
+    (MissingRequiredArgument, BadArgument, UserInputError) : "invalid",
     (CheckFailure,) : "denied",
 }
 
@@ -102,6 +102,21 @@ class GTS(Bot):
 
 
 
+    async def evaluate(self, message_content, channel, loading_text = "..."):
+        "makes gts evaluate given message content at given channel, like it's an actual given command"
+
+        leech = await channel.send(formatting.code(loading_text))
+        leech.content = message_content
+        leech.author = channel.guild.owner
+
+        await self.invoke(await self.get_context(leech))
+
+        await leech.delete()
+
+
+
+
+
     async def on_command_completion(self, ctx):
         if hasattr(ctx, "rt"):
             # the return value of every command will be saved into ctx.rt
@@ -158,6 +173,18 @@ class GTS(Bot):
 
 
 
+    async def on_member_join(self, member):
+        storage = global_database[member.guild.id].settings
+
+        if "default_channel" in storage:
+            channel = member.guild.get_channel(storage.default_channel)
+        else:
+            channel = member.guild.default_channel
+
+        if channel is None:
+            return
+
+        await self.evaluate(f"7!rerole {member.id}", channel)
 
 
 
@@ -166,5 +193,19 @@ class GTS(Bot):
 
 
 
-# gts = Bot("7!", case_insensitive = True)
-# gts.remove_command("help") # there is no help, motherfucker
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#

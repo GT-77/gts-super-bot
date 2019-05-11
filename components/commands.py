@@ -7,6 +7,11 @@ before making the bot jump into action
 
 
 
+from types import SimpleNamespace
+
+from typing import Optional, Union
+
+
 from discord import (
     Member, TextChannel, Role,
     Colour, Emoji
@@ -18,6 +23,8 @@ from discord.ext.commands import (
     Converter,
     BadArgument,
 )
+
+
 
 from .structure import GTS, global_database, global_db, gdb
 
@@ -41,6 +48,50 @@ class CommandConverter(Converter):
         if command is None:
             raise BadArgument
         return command
+
+
+
+
+
+
+
+
+
+r_txt = restriction_texts = SimpleNamespace (
+    is_owner = "you must be dad to use this command so basically forget anything",
+    is_nsfw = "u must b in a nsfw channel 2 use this command",
+    guild_only = "can only be used in a server",
+
+    manage_roles = "can only be used by niggas with role managing permissions",
+    admin = "u must be admin 2 use this",
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -98,10 +149,7 @@ async def help_(ctx, command:CommandConverter = None):
 
 @gts.command (
     brief = "scans the server",
-    restrictions = (
-        "can only be used by niggas with role managing permissions",
-        "can only be used in a server"
-    )
+    restrictions = (r_txt.manage_roles, r_txt.guild_only),
 )
 @has_permissions(manage_roles = True)
 @guild_only()
@@ -158,7 +206,7 @@ async def scan(ctx, *, save_file = "recent"):
         "rr"
     ],
     brief = "reroles a member",
-    restrictions = scan.options["restrictions"],
+    restrictions = (r_txt.manage_roles, r_txt.guild_only),
     examples = {
         "@HighGuard": "to rerole highguard (if it be an actual mention)",
         "285495766179512331": "to rerole member with that id (which happens 2 b mafferozzo)"
@@ -178,6 +226,106 @@ async def rerole(ctx, member:Member):
 
     if member.id in storage:
         await member.edit(reason = "4 my homies", roles = filter(bool, (member.guild.get_role(int(id_)) for id_ in storage[member.id].split())))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command (
+    name = "set",
+    brief = "sets a server setting to a value",
+    restrictions = (r_txt.guild_only, r_txt.admin),
+    examples = {
+        "default_channel #general": "to make me remember that the default channel of this server is #general (if it's an actual channel mention)",
+        "default_channel 314400771796107265": "to set default_channel to the channel with the id 314400771796107265 (if it exists)",
+    }
+)
+@has_permissions(administrator = True)
+@guild_only()
+async def set_(ctx, setting, value:Union[Member, TextChannel, Role, Colour, Emoji, bool, int, str]):
+    """
+    currently the only possible setting is default_channel so yeah i know that's pretty fucking boring
+    """
+
+    approved_settings = dict (
+        default_channel = TextChannel,
+    )
+
+    if setting in approved_settings and isinstance(value, approved_settings[setting]):
+        storage = global_database[ctx.guild.id].settings
+
+        if hasattr(value, "id"):
+            storage[setting] = value.id
+        else:
+            storage[setting] = value
+
+    else:
+        raise BadArgument(f"{setting}: {value} pair is invalid")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
