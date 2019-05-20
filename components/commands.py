@@ -7,14 +7,22 @@ before making the bot jump into action
 
 
 
+from asyncio import sleep
+
+from random import choice
+
 from types import SimpleNamespace
 
 from typing import Optional, Union
 
 
+
+
 from discord import (
     Member, TextChannel, Role,
-    Colour, Emoji
+    Colour, Emoji,
+
+    File,
 )
 
 from discord.ext.commands import (
@@ -28,7 +36,7 @@ from discord.ext.commands import (
 
 from .structure import GTS, global_database, global_db, gdb
 
-from .utilities import formatting
+from .utilities import formatting, files, folders
 
 
 
@@ -307,6 +315,241 @@ async def set_(ctx, setting, value:Union[Member, TextChannel, Role, Colour, Emoj
 
     else:
         raise BadArgument(f"{setting}: {value} pair is invalid")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command (
+    aliases = [
+        "kobayas",
+        "koba",
+    ],
+    brief = "does a miss kobayashi's dragon maid dot transition thingy",
+    examples = {
+        "": "and u get a normal MKDM transition",
+        '4 1 :gay_pride_flag: " " ur really fucking gay': "and u'll c what u get when u try it"
+    }
+)
+async def kobayashi (
+    ctx,
+    length:int = 5,
+    speed:float = 1.0,
+    dot_style = '・',
+    spacing = '',
+
+    *,
+    custom_transition = None
+):
+
+
+
+    """
+    that's pretty much it
+    (here's the transitions i mean btw: https://www.youtube.com/watch?v=L2Rc6ie8_TQ)
+
+
+
+    jk
+
+    if you're looking at this help message rn u probably saw all those optional parameters
+    like "custom_transition" and "speed" and shit
+    and thought to urself "wtf holy shit lma ;o can i fuck with this"
+    the answer is yes, u can
+    this command is not as inoccent as it seems
+
+    "length" represents the amount of placeholder dots present.
+    if there's more dots than the length of the transition then some dots will remain forever unreplaced xyz
+
+    "speed" is the speed at which the dots get replaced. the default speed of 1 is precisely 2 dots per second
+
+    "dot_style" is the look of each placeholder dot (which is obv ・ in bold). u can change dat to anythin
+
+    "spacing" is the spacing between each dot. default is nothing
+
+
+    last but neva least is "custom_transition". this is a parameter that eats up the rest of ur command so u can set it to whatev u want
+    witout worrying bout quotes n shit. im lazy to explain so find out urself wat that is bout
+    """
+
+
+
+    if custom_transition is None:
+
+        if "transitions" in ctx.database:
+            transition_full_text_choice = choice(ctx.database.transitions.split()).split('_')
+        else:
+            raise Exception("wtf where my MKDM transitions") # bail out. this is not supposed to happen
+
+    else:
+        transition_full_text_choice = custom_transition.split()
+
+
+
+    transition_text = [dot_style] * length
+
+    transition_msg = await ctx.send(formatting.bold(spacing.join(transition_text)))
+
+    for index in range(length):
+
+        if transition_full_text_choice:
+            transition_text[index] = transition_full_text_choice.pop(0)
+
+            await sleep(0.5 / speed)
+            await transition_msg.edit(content = spacing.join(transition_text))
+
+        else:
+            break
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command (
+    brief = "xyz",
+    restrictions = [
+        "xyz",
+    ],
+    examples = {
+        "": "xyz",
+    },
+    feedback = False,
+)
+async def xyz(ctx, xyz = "xyz"):
+    "xyz"
+
+    abc = f"files/xyz/{xyz}/"
+    jason_brown = list(files(abc))
+
+    for lil_marco in (xyz, "n", "liquid_xyz"):
+        if lil_marco not in ctx.db:
+            raise BadArgument(lil_marco) # xyz
+
+    if not jason_brown:
+        raise BadArgument(abc) # terry davis
+
+    def CHRIS_BROWN(xyz):
+        return choice(list(filter(bool, xyz.split("|||")))).strip()
+
+    # xyz
+    await ctx.send( CHRIS_BROWN(ctx.db.xyz + '||| ' + ctx.db.liquid_xyz), file = File(choice(jason_brown), CHRIS_BROWN(ctx.db.n)) )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

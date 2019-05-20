@@ -102,10 +102,9 @@ PATH = "replies" # this is the path from run.py to the replies folder
 
 
 
-from pathlib import Path
 from random import choice
 
-from .utilities import files, folders, lines, word_in_container
+from .utilities import Path, word_in_container
 
 
 
@@ -121,7 +120,7 @@ class ReplyType:
     def __init__(self, reply_file_path):
         self.name = reply_file_path.stem
 
-        parsed = filter(bool, (line.strip() for line in lines(reply_file_path)))
+        parsed = filter(bool, (line.strip() for line in reply_file_path.lines()))
 
         self.include = next(parsed) == "+"
         self.replies = list(parsed)
@@ -157,7 +156,7 @@ class CollectionOfReplyTypes:
         self.include = reply_folder_path.name.startswith("+")
 
         self.reply_types = dict()
-        for file_path in files(reply_folder_path):
+        for file_path in reply_folder_path.files():
             self.reply_types[file_path.stem] = ReplyType(file_path)
 
         self.default = self.reply_types["DEFAULT"]
@@ -184,7 +183,7 @@ class CollectionOfCollectionsOfReplyTypes:
         self.name = path.name
 
         self.collections = dict()
-        for folder_path in folders(path):
+        for folder_path in path.folders():
             self.collections[folder_path.name[2:]] = CollectionOfReplyTypes(folder_path)
 
         self.default_collection = self.collections["DEFAULT"]
@@ -212,7 +211,7 @@ class CollectionOfCollectionsOfReplyTypes:
 
 
 replies = dict()
-for subpath in folders(Path(PATH)):
+for subpath in Path(PATH).folders():
     replies[subpath.name] = CollectionOfCollectionsOfReplyTypes(subpath)
 
 

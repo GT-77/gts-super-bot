@@ -14,10 +14,16 @@ which commands.py will import, and define all commands on an instance of it
 
 from asyncio import sleep
 
+
+
 from discord.ext.commands import (
     Bot,
     BadArgument, UserInputError, MissingRequiredArgument, CommandNotFound, CheckFailure
 )
+
+from discord import Forbidden
+
+
 
 from .database import Database, GlobalDatabase
 
@@ -54,7 +60,8 @@ async def feedback(ctx):
     the context must have a 'situation' attribute set,
     otherwise the call doesn't even make any sense
     """
-    await type_n_send(ctx, command_reply(ctx.command.name, ctx.situation).format(ctx = ctx))
+    if ctx.command.options["feedback"]:
+        await type_n_send(ctx, command_reply(ctx.command.name, ctx.situation).format(ctx = ctx))
 
 
 
@@ -68,7 +75,7 @@ class GTS(Bot):
 
         @self.before_invoke
         async def before_invoke(ctx):
-            await ctx.trigger_typing()
+            # await ctx.trigger_typing()
             ctx.database = ctx.db = Database(ctx.command.name)
 
 
@@ -80,6 +87,7 @@ class GTS(Bot):
             rt = super(GTS, self).command(*args, **kwargs)(func)
 
             rt.options = kwargs
+            rt.options.setdefault("feedback", True)
 
             initialize_help(rt)
 
@@ -103,7 +111,7 @@ class GTS(Bot):
 
 
     async def evaluate(self, message_content, channel, loading_text = "..."):
-        "makes gts evaluate given message content at given channel, like it's an actual given command"
+        "makes gts evaluate given message content at given channel, like it's an actual message / given command"
 
         leech = await channel.send(formatting.code(loading_text))
         leech.content = message_content
@@ -112,8 +120,6 @@ class GTS(Bot):
         await self.invoke(await self.get_context(leech))
 
         await leech.delete()
-
-
 
 
 
@@ -151,7 +157,7 @@ class GTS(Bot):
                 set_situation(situation)
                 break
         else:
-            set_situation("fail") # not supposed to happen but could happen. if control reaches this point then the bot has some bugs that need to be fixed
+            set_situation("fail") # not supposed to happen but could happen. if control reaches this point then the bot has some bugs that need to be fixed or it lacks something in its folder environment
             print("wtf", type(error), error)
 
 
