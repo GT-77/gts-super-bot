@@ -60,9 +60,12 @@ class Path(_PathType):
 
     def append(self, string, *args, **kwargs):
         'appends text to the end of the file with given path'
+        
         kwargs.setdefault('encoding', 'UTF-8')
         kwargs.setdefault('mode', 'a')
+
         self.assure()
+
         with self.open(*args, **kwargs) as file:
             file.write(string)
 

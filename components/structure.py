@@ -15,10 +15,10 @@ which commands.py will import, and define all commands on an instance of it
 from asyncio import sleep
 
 
-
 from discord.ext.commands import (
     Bot,
-    BadArgument, UserInputError, MissingRequiredArgument, CommandNotFound, CheckFailure
+    Group,
+    BadArgument, UserInputError, MissingRequiredArgument, CommandNotFound, CheckFailure, CommandOnCooldown, ArgumentParsingError
 )
 
 from discord import Forbidden
@@ -29,14 +29,16 @@ from .database import Database, GlobalDatabase
 
 from .dialogue import command_reply, ping_reply, passive_reply
 
-from .utilities import one_in, initialize_help, formatting
+from .utilities import one_in, initialize_help, formatting, Logs, ID_OF
 
 
 
-SITUATION_DICT = { # this dict pairs received errors received by on_command_error with corresponding command situations
+
+SITUATION_DICT = { # this dict pairs errors caught by on_command_error with their corresponding command situations
     (CommandNotFound,) : "success",
-    (MissingRequiredArgument, BadArgument, UserInputError) : "invalid",
+    (UserInputError, ArgumentParsingError) : "invalid",
     (CheckFailure,) : "denied",
+    (CommandOnCooldown,): 'cooldown',
 }
 
 
@@ -45,11 +47,39 @@ global_database = global_db = gdb = GlobalDatabase() # ... yeah i know
 
 
 
+
+
+
+
+
 async def type_n_send(location, string):
-    "types the given string n sends it to the given location (the location must be a Messageable)"
-    async with location.typing():
-        await sleep(len(string) / 10) # gts types at a modest and calm speed of 600 CPM
-    return await location.send(string)
+    'types the given string n sends it to the given location (the location must be a Messageable)'
+
+    if not type_n_send.writing:
+
+        type_n_send.writing = True
+
+        async with location.typing():
+
+            await sleep(len(string) / 10) # gts types at a modest and calm speed of 600 CPM
+
+        type_n_send.writing = False
+
+        return await location.send(string)
+
+
+
+
+type_n_send.writing = False
+
+
+
+
+
+
+
+
+
 
 
 
@@ -61,7 +91,18 @@ async def feedback(ctx):
     otherwise the call doesn't even make any sense
     """
     if ctx.command.options["feedback"]:
-        await type_n_send(ctx, command_reply(ctx.command.name, ctx.situation).format(ctx = ctx))
+        await type_n_send(ctx, command_reply(ctx.command.qualified_name, ctx.situation).format(ctx = ctx))
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -70,17 +111,54 @@ class GTS(Bot):
 
 
 
+
+
+
+
+
+
+
+
+
     def __init__(self, *args, **kwargs):
+
         super().__init__(*args, **kwargs)
+
+
 
         @self.before_invoke
         async def before_invoke(ctx):
             # await ctx.trigger_typing()
-            ctx.database = ctx.db = Database(ctx.command.name)
+            ctx.database = ctx.db = Database(ctx.command.qualified_name.split()[0])
+
+            def log(*sending, sep = ' '):
+
+                self.logs.command_log(ctx, sep.join(map(str, sending)))
+
+            ctx.log = log
 
 
 
-    # i wrapped this so i can customize the 7!help command
+        self.logs = Logs()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # i wrapped this so i can customize the 7!help command and add some extra parameters
     def command(self, *args, **kwargs):
 
         def decorator(func):
@@ -97,8 +175,82 @@ class GTS(Bot):
 
 
 
+
+
+
+
+    # same here
+    def group(self, *args, **kwargs):
+
+        def decorator(func):
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            kwargs.setdefault('invoke_without_command', True)
+            rt = super(GTS, self).group(*args, **kwargs)(func)
+
+            rt.options = kwargs
+            rt.options.setdefault("feedback", True)
+
+
+
+            # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            def command(*args, **kwargs):
+
+                # # # # # # # # # # # # # # # # # # # # # # # # # # #
+                def decorator(func):
+
+                    rt_ = Group.command(rt, *args, **kwargs)(func)
+
+                    rt_.options = kwargs
+
+                    rt_.options.setdefault('feedback', True)
+
+                    initialize_help(rt_)
+
+                    return rt_
+                # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+                return decorator
+            # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+
+
+
+
+            rt.command = command
+
+
+
+
+
+            return rt
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+        return decorator
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     async def reply(self, ctx):
         "makes gts take the thought of replying to the given message in the given context into consideration"
+
         if ctx.message.content.startswith(self.user.mention):
             reply_type = ping_reply
         else:
@@ -110,12 +262,97 @@ class GTS(Bot):
 
 
 
-    async def evaluate(self, message_content, channel, loading_text = "..."):
-        "makes gts evaluate given message content at given channel, like it's an actual message / given command"
 
-        leech = await channel.send(formatting.code(loading_text))
+
+
+
+
+
+
+
+
+
+
+
+    async def invoke(self, ctx):
+
+        '''
+        if ctx.command is None:
+
+            if await self.is_function_call(ctx):
+
+                self.logs.log_detected_function_call(ctx)
+
+                cmp = ctx.message.content.split()
+
+                cmp = ['7!function call', cmp[0].split('!')[1]] + cmp[1:]
+
+                msg = ctx.message
+
+                msg.content = ' '.join(cmp)
+
+                ctx = await self.get_context(msg)
+
+                self.logs.log(f'message content evaluated to {ctx.message.content!r}')
+
+            else:
+
+                return False
+        '''
+
+        if ctx.command is None:
+            return False
+
+
+
+        self.logs.log_invoke(ctx)
+
+        await super().invoke(ctx)
+
+        return True
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    async def evaluate(self, message_content, location, loading_text = "...", guild_owner = False):
+        "makes gts evaluate given message content at given location, like it's an actual message / given command"
+
+        self.logs.log(f'evaluating {message_content} at {location}...')
+        leech = await location.send(formatting.code(loading_text))
         leech.content = message_content
-        leech.author = channel.guild.owner
+        if guild_owner:
+            leech.author = location.guild.owner
 
         await self.invoke(await self.get_context(leech))
 
@@ -123,15 +360,95 @@ class GTS(Bot):
 
 
 
+
+
+
+
+
+
+
+
+
+    function_prefixes = ['F7!', '7F!']
+
+    async def is_function_call(self, ctx):
+
+        for prefix in self.function_prefixes:
+
+            if ctx.message.content.startswith(prefix):
+
+                self.logs.log('func check returning true...')
+                return True
+
+        return False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     async def on_command_completion(self, ctx):
+
         if hasattr(ctx, "rt"):
             # the return value of every command will be saved into ctx.rt
             # and will be converted by the function in the returning annotation
             # if it doesn't exist then it defaults to str
             await ctx.send(ctx.command.callback.__annotations__.setdefault("return", str)(ctx.rt))
 
-        ctx.situation = "success" # yeah didn't bother to write a set_situation for this one, i mean it's just one statement
+        ctx.situation = "success"
         await feedback(ctx)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -148,7 +465,9 @@ class GTS(Bot):
 
 
         if ctx.command is None:
-            ctx.command = type("DummyCommand", (), dict(name = "_NO_COMMAND")) # set the command to a dummy object. bless duck typing
+            ctx.command = type("DummyCommand", (), dict(qualified_name = "_NO_COMMAND", options = {'feedback': True})) # set the command to a dummy object. bless duck typing
+
+        ctx.error = error
 
 
 
@@ -158,7 +477,7 @@ class GTS(Bot):
                 break
         else:
             set_situation("fail") # not supposed to happen but could happen. if control reaches this point then the bot has some bugs that need to be fixed or it lacks something in its folder environment
-            print("wtf", type(error), error)
+            self.logs.log_uncaught_exception(error)
 
 
 
@@ -166,31 +485,186 @@ class GTS(Bot):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    async def gather_data(self, ctx, *ids, txt_db, file_db):
+        '''
+        if given context has its message author id in given ids
+        then it will put the content of the message in the given txt_db
+        and the attachments of the message in given file_db
+
+        if no ids are given then it will always gather data no matter who sent the message
+        '''
+
+        if (not ids) or ctx.message.author.id in ids:
+
+            txt_db << ctx.message.content
+
+            for attachment in ctx.message.attachments:
+
+                await (file_db << attachment)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     async def on_message(self, msg):
-        if msg.author == self.user:
-            return
 
         ctx = await self.get_context(msg)
 
-        if msg.content.startswith(self.command_prefix):
-            await self.invoke(ctx)
-        else:
-            await self.reply(ctx)
+
+
+        if msg.author == self.user:
+
+            self.logs.log_sent_message(ctx)
+
+            return
+
+
+
+        self.logs.log_message(ctx)
+
+
+
+        try:
+
+            if not await self.invoke(ctx):
+
+                await self.reply(ctx)
+
+        except Forbidden:
+            self.logs.log_forbidden(ctx)
+
+
+
+        xyz_database = Database('xyz').xyz
+
+        await self.gather_data(ctx, ID_OF.CYNI, txt_db = xyz_database.matthias_bider, file_db = xyz_database.xyz)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
     async def on_member_join(self, member):
-        storage = global_database[member.guild.id].settings
+
+        self.logs.log_member_join(member)
+
+        storage = global_database.servers[member.guild.id].settings
 
         if "default_channel" in storage:
             channel = member.guild.get_channel(storage.default_channel)
         else:
-            channel = member.guild.default_channel
+            channel = member.guild.system_channel
+
+
 
         if channel is None:
-            return
+            for channel in member.guild.text_channels:
+                if channel.permissions_for(guild.me).send_messages:
+                    break
 
-        await self.evaluate(f"7!rerole {member.id}", channel)
+            else:
+                return
+
+        if channel is not None:
+            await self.evaluate(f"7!rerole {member.id}", channel, guild_owner = True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    async def on_message_edit(self, before, after):
+
+        before_ctx = await self.get_context(before)
+        after_ctx = await self.get_context(after)
+
+        self.logs.log_message_edit(before_ctx, after_ctx)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    async def on_message_delete(self, msg):
+
+        ctx = await self.get_context(msg)
+
+        self.logs.log_message_delete(ctx)
+
 
 
 

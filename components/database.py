@@ -187,11 +187,16 @@ def initialize(*args):
 from os import remove, rmdir
 from shutil import rmtree
 
-from random import choice
+from random import choice, shuffle
 
 
 
-from .utilities import Path, basic_conv, empty_iter
+from .utilities import (
+    Path,
+    basic_conv, one_in,
+    empty, limit,
+    empty_iter, iter_len, iter_rand,
+)
 
 
 
@@ -310,7 +315,8 @@ class LineSet:
                 if line.endswith('\n'):
                     line = line[:-1]
 
-                yield basic_conv(line)
+                if line:
+                    yield basic_conv(line)
 
 
 
@@ -318,6 +324,14 @@ class LineSet:
         'clear the set'
         self._set_path.unlink_file()
         self._set_path.strip()
+
+
+
+
+
+
+
+
 
 
 
@@ -363,7 +377,9 @@ class StringSet:
     def __iter__(self):
         for direction in self._path:
             if direction.suffix == '.string':
-                yield direction.read_text()
+                string = direction.read_text()
+                if string:
+                    yield string
 
 
 
@@ -372,6 +388,9 @@ class StringSet:
         for direction in self._path:
             if direction.suffix == '.string':
                 direction.unlink_file()
+
+
+
 
 
 
@@ -395,6 +414,10 @@ class _AwaitMe:
 
     def __await__(self):
         return self.run().__await__()
+
+
+
+
 
 
 
@@ -446,6 +469,15 @@ class AttachmentSet:
 
 
 
+
+
+
+
+
+
+
+
+
 RESERVED = 'string', 'set', 'dat' # all these file types are special and should not be considered attachments
 TO_MANGLE = (*RESERVED, 'exe', 'dll') # these are all file suffixes that will be saved with a trailing underscore
 
@@ -454,13 +486,22 @@ _dotify = lambda str_iter: tuple(map(lambda string: '.' + string, str_iter)) # a
 RESERVED_ = _dotify(RESERVED)
 TO_MANGLE_ = _dotify(TO_MANGLE)
 
+SET_BUFF_MAGNITUDE = 777 # a vague number denoting how much you're dedicated to sacrifice memory for speed with set buffers
+
 class Set(LineSet, StringSet, AttachmentSet):
     'brings all set types into one'
 
 
 
     def __init__(self, path):
-        self.__dict__['_superclasses'] = LineSet, StringSet, AttachmentSet
+
+        for attr, value in {
+            '_superclasses': (LineSet, StringSet, AttachmentSet),
+            '_len': None,
+            '_buffer': list(),
+        }.items():
+            self.__dict__[attr] = value
+
         for superclass in self._superclasses:
             superclass.__init__(self, path)
 
@@ -468,19 +509,33 @@ class Set(LineSet, StringSet, AttachmentSet):
 
     def __lshift__(self, element):
 
+        if self._len is not None:
+            self.__dict__['_len'] += 1
+
+
+
+
         if isinstance(element, int) or isinstance(element, bool):
             element = str(element)
+
+
 
         if isinstance(element, str):
             if '\n' in element:
                 return StringSet.__lshift__(self, element)
             return LineSet.__lshift__(self, element)
+
+
+
         # element is assumed to be a discord.Attachment
         if '.' in element.filename:
             if element.filename.split('.')[-1].lower() in TO_MANGLE:
                 element.filename += '_' # you know what i'm trying to avoid here
 
         return AttachmentSet.__lshift__(self, element)
+
+
+
 
 
 
@@ -496,7 +551,25 @@ class Set(LineSet, StringSet, AttachmentSet):
 
     def __pos__(self):
         'returns a random element from the set'
-        return choice(list(self)) # memory inefficient but i'm lazy rn
+
+
+
+        if self._len is None:
+            self.__dict__['_len'] = iter_len(self)
+
+
+
+        if not self._buffer:
+
+            for element in self:
+                if one_in(self._len // SET_BUFF_MAGNITUDE + 1):
+                    self._buffer.append(element)
+
+            shuffle(self._buffer)
+
+
+
+        return self._buffer.pop()
 
 
 
@@ -517,12 +590,53 @@ class Set(LineSet, StringSet, AttachmentSet):
 
         self._path.strip()
 
+        self.__dict__['_len'] = None
+        self.__dict__['_buffer'] = list()
+
+
+
+    def __add__(self, other):
+        'returns a random element selected from both self and other proportionally to their lengths'
+        if self._len is None:
+            from_s = +self
+        else:
+            from_s = None
+
+        if other._len is None:
+            from_o = +other
+        else:
+            from_o = None
+
+
+
+        if one_in(other._len // self._len):
+            if from_s is None:
+                return +self
+            else:
+                return from_s
+        else:
+            if from_o is None:
+                return +other
+            else:
+                return from_o
+
+
+
+    def __len__(self):
+
+        if self._len is None:
+            +self
+
+        return self._len
 
 
 
 
 
 
+
+
+REPR_LEN = 5 # the max amount of elements to show on a pointer repr
 
 class Pointer(DatFile, Set):
     'points to a path in the database'
@@ -547,6 +661,19 @@ class Pointer(DatFile, Set):
             return Pointer(self._path / str(item))
 
     __getattr__ = __getitem__
+
+
+
+    def __setitem__(self, item, value):
+        super().__setitem__(item, value)
+
+        for attr, value in {
+            '_len': None,
+            '_buffer': list(),
+        }.items():
+            self.__dict__[attr] = value
+
+    __setattr__ = __setitem__
 
 
 
@@ -582,7 +709,23 @@ class Pointer(DatFile, Set):
 
 
     def __bool__(self):
-        return empty_iter(self)
+        return not empty_iter(self)
+
+
+
+    def __repr__(self):
+
+        itr = iter(self)
+
+        cls_name = self.__class__.__name__
+        showing_elements = ', '.join( map(repr, limit(itr, REPR_LEN)) )
+        there_are_more = ', ...' if not empty(itr) else ''
+
+        angle_brackets = f' <{showing_elements}{there_are_more}>' if showing_elements else ''
+        round_brackets = f'({self._path!r})'
+
+        return cls_name + round_brackets + angle_brackets
+
 
 
 
@@ -609,6 +752,14 @@ class Database(Pointer):
 
     def __init__(self, command_name):
         super().__init__(Path(PATH) / 'databases' / command_name)
+
+
+
+    def __repr__(self):
+        super_repr = super().__repr__()
+        parenthesis_opening = super_repr.index('(')
+        parenthesis_closing = super_repr.index(')')
+        return super_repr[:parenthesis_opening] + f"('{self._path.stem}'" + super_repr[parenthesis_closing + 1:]
 
 
 

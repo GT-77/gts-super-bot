@@ -80,6 +80,7 @@ thanks to that +, gts would treat "gravity.txt"s contents as
     iopa
     zxcv
     default reply 1
+    default reply 2
 
 
 
@@ -88,7 +89,7 @@ but i'm lazy to explain more so yeah good luck figuring it out on your own
 
 one thing that i wanted to mention about order and plurals
 in the message content "hi guys my name is josh" if gts knows the words "guys", "name" and "josh" only "guys" will be taken into consideration
-and the word should be implemented as "guy.txt" because gts can actually detect plurals and singulars (at a pretty bad level though, he's kind of stupid)
+and the word should be implemented as "guy.txt" because gts can actually detect plurals and singulars (at a pretty basic level though, he's kind of stupid)
 
 
 

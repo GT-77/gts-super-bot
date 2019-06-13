@@ -36,7 +36,8 @@ fundamental_discord_formats = dict (
     italics = "*",
     bold = "**",
     underline = "__",
-    strikethru = "~~" # xd
+    strikethru = "~~", # xd
+    spoiler = '||',
 
 )
 

@@ -4,8 +4,31 @@ from components import gts
 
 @gts.event
 async def on_ready():
-    print("let's fucking go")
+
+    gts.logs.log_awoken() # .log_ready() works too but log_awoken looks / sounds cooler
 
 
 
-gts.run("NDc0MjkwODU3ODY1MTE3Njk3.XLwKzA.MlKY7A7JL9WrREfQpELrck3btoo")
+with open('token.txt') as token_file:
+
+    token = token_file.read().split()
+
+
+
+while True:
+
+    try:
+
+        gts.run(*token)
+
+    except Exception as exc:
+
+        gts.logs.log_fatal_uncaught_exception(exc)
+
+    else:
+
+        break
+
+
+
+gts.logs.log_asleep()

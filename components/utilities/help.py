@@ -10,33 +10,92 @@ from discord.ext.commands import is_owner, has_permissions, guild_only, is_nsfw,
 
 from .formatting import formatting
 
+from .functions import takewhile
 
 
-def initialize_help(command):
+
+class Help:
+
+
+    def __init__(self, command, **options):
+
+        for key, value in {
+
+            'usage_section': f':seven::exclamation:{command.qualified_name} {command.signature}',
+            'aliases_section': 'aliases: ' + ', '.join(command.aliases) if command.aliases else None,
+            'brief': 'ur gay',
+            'restrictions_section': '\n'.join(f'・{restriction}' for restriction in options['restrictions']) if 'restrictions' in options else None,
+            'help_section': command.help if command.help else 'basically i have no fucking clue about this command but apparently i have it',
+
+            # the most fuckfest line of code in the entire bot
+            'example_section': None if 'examples' not in options else 'here r some example(s)\n\n' + '\n\n'.join(f'u do {formatting.bold_code(f"7!{command.qualified_name} {use}")} {result}' for use, result in options['examples'].items())
+
+        }.items():
+
+            options.setdefault(key, value)
+
+
+        if options.get('group') and command.commands:
+
+            options.setdefault( 'subcommands_section', formatting.bold('subcommands of this command:\n\n') + '\n'.join(formatting.code('7!' + command.qualified_name) + ' (u can do ' + formatting.code(f'7!help {command.qualified_name}') + ')' for command in command.commands) )
+
+        else:
+
+            options.setdefault( 'subcommands_section', '' )
+
+
+
+        self.parsed = list(filter(
+
+            bool,
+
+            [
+
+                formatting.bold_italics(options['usage_section']),
+                formatting.italics(options['aliases_section']),
+                formatting.bold_underline(options['brief']),
+                formatting.italics(options['restrictions_section']),
+                formatting.codeblock(options['help_section']),
+                options['example_section'],
+                options['subcommands_section'],
+
+            ]
+
+
+        ))
+
+
+
+
+
+        options.setdefault ( 'full_help', '\n\n'.join(self.parsed) )
+
+        self.__dict__.update(options)
+
+
+
+    def __str__(self):
+
+        return self.full_help
+
+
+
+    def __len__(self):
+
+        return len(self.full_help)
+
+
+
+
+
+
+
+
+
+
+
+
+def initialize_help(command, **extra_options):
     'initializes ur needed help into the command (given command must have an options attribute set with the kwargs of the command decorator)'
 
-    op = command.options.copy()
-
-    for key, value in {
-        'usage': f':seven::exclamation:{command.name} {command.signature}',
-        'brief': 'ur gay',
-        'restrictions_section': '\n'.join(f'・{restriction}' for restriction in op['restrictions']) if 'restrictions' in op else '',
-        'help_section': command.help if command.help else 'basically i have no fucking clue about this command but apparently i have it',
-
-        # the most fuckfest line of code in the entire bot
-        'example_section': '' if 'examples' not in op else 'here r some example(s)\n\n' + '\n\n'.join(f'u do {formatting.bold_code(f"7!{command.name} {use}")} {result}' for use, result in op['examples'].items())
-    }.items():
-        op.setdefault(key, value)
-
-    op.setdefault (
-        'full_help',
-        '\n\n'.join ( [
-            formatting.bold_italics(op['usage']),
-            formatting.bold_underline(op['brief']),
-            formatting.italics(op['restrictions_section']),
-            formatting.codeblock(op['help_section']),
-            op['example_section'],
-        ] )
-    )
-
-    command.__dict__.update(full_help = op['full_help'])
+    command.help_object = command.help_obj = Help(command, **command.options, **extra_options)
