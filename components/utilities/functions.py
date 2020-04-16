@@ -215,3 +215,32 @@ def indent(string, amount = 1, style = '   '):
     indent = style * amount
 
     return '\n'.join(indent + line for line in string.split('\n'))
+
+
+
+
+
+
+def console(enter = '>>> ', exit_ = 'exit()'):
+
+    input_ = input(enter)
+
+    while input_ != exit_:
+
+        print(repr(eval(input_)))
+
+        input_ = input(enter)
+
+'''
+
+def console(enter = '>>> ', exit_ = 'exit()'):
+
+    input_ = input('>>> ')
+
+    while input_ != 'exit()':
+
+        print(repr(eval(input_)))
+
+        input_ = input('>>> ')
+
+'''

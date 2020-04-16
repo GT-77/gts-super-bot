@@ -56,7 +56,7 @@ LOG_STYLE = SimpleNamespace (
 
 
 
-    AWOKEN = ('/A\\', 'i have woken up. お久しぶり、ご主人様'),
+    AWOKEN = ('/A\\', 'i have woken up. お久しぶり'),
 
     ASLEEP = ('\\V/', 'i\'m goin 2 sleep. お休み'),
 

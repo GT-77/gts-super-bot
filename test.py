@@ -1,82 +1,47 @@
-'''
+import discord as d
 
-this shit is almost ireversible so i better be careful xyz
+with open('token.txt') as t_file:
 
-'''
+    token = t_file.read().split()[0].strip()
 
 
+client = d.Client()
 
-from urllib.request import Request as Rq, urlopen as uo
-
-from urllib.error import HTTPError
-
-from bs4 import BeautifulSoup as BS
-
-from components.utilities import Path
-
-from components.database import Pointer as P
+@client.event
+async def on_ready():
 
 
 
-im_friendly = {'User-Agent': 'Mozilla/5.0'}
+    with open('gts super bot v2.png', 'rb') as new_avatar_file:
+        new_avatar = new_avatar_file.read()
+
+
+    await client.edit_settings (
+
+        convert_emoticons = False,
+
+        explicit_content_filter = d.UserContentFilter.disabled,
+
+    )
+
+    await client.edit (
+
+        avatar = new_avatar # i look 2 cool
+
+
+    ,   house = d.HypeSquadHouse.bravery
+
+    )
 
 
 
-databases = P(Path('databases'))
-
-xyz_mb = databases.xyz.xyz.matthias_bider
-
-jabroni = databases.get_log.ecchi['james_bree-morgan_presents_case_number_87798972__he_has_fun_doin_it']
-
-extracting_tags = ['a', 'span', 'p', 'h1']
-
-added = cleared = 0
-
-jabroni_itr = iter(jabroni)
-
-cleared = 36
-for i in range(cleared):
-    next(jabroni_itr)
-
-for url in jabroni_itr:
-
-    try:
-
-        rp = uo(Rq(url, headers = im_friendly))
-
-        rd = rp.read()
-
-        soup = BS(rd, 'html.parser')
-
-    except Exception as fuck:
-
-        print(url, 'gives', fuck)
-
-        print('i\'ll keep goin i guess')
-        continue
-
-
-
-    for tag in extracting_tags:
-
-        for tag_obj in soup.find_all(tag):
-
-            xyz_mb << tag_obj.text
-
-            added += 1
-
-            print(added, '->', tag_obj.text[:20], '...')
-
-    cleared += 1
-    print('CLEARED', cleared, '->', rp.url, flush = True)
+    await client.close()
 
 
 
 
 
-
-
-
+client.run(token)
 
 
 

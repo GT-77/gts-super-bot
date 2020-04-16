@@ -33,6 +33,10 @@ from .utilities import one_in, initialize_help, formatting, Logs, ID_OF
 
 
 
+from . import kintore # 5th of April 2020 8:30 PM
+from datetime import datetime, date, time # this too
+
+
 
 SITUATION_DICT = { # this dict pairs errors caught by on_command_error with their corresponding command situations
     (CommandNotFound,) : "success",
@@ -44,8 +48,6 @@ SITUATION_DICT = { # this dict pairs errors caught by on_command_error with thei
 
 
 global_database = global_db = gdb = GlobalDatabase() # ... yeah i know
-
-
 
 
 
@@ -186,6 +188,7 @@ class GTS(Bot):
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             kwargs.setdefault('invoke_without_command', True)
+            kwargs.setdefault('case_insensitive', True)
             rt = super(GTS, self).group(*args, **kwargs)(func)
 
             rt.options = kwargs
@@ -251,11 +254,11 @@ class GTS(Bot):
     async def reply(self, ctx):
         "makes gts take the thought of replying to the given message in the given context into consideration"
 
-        if ctx.message.content.startswith(self.user.mention):
+        if ctx.message.content.startswith(self.user.mention) or ctx.message.content.startswith(f"<@!{self.user.id}>"):
             reply_type = ping_reply
         else:
             reply_type = passive_reply
-            if not one_in(37):
+            if not one_in(77):
                 return
 
         await type_n_send(ctx, reply_type(ctx.message.author.id, ctx.message.content).format(ctx = ctx))
@@ -300,7 +303,8 @@ class GTS(Bot):
                 return False
         '''
 
-        if ctx.command is None:
+        if not ctx.message.content.startswith(self.command_prefix): # not doing `if ctx.command is None` because that surpresses the CommandNotFound exception
+
             return False
 
 
@@ -478,6 +482,7 @@ class GTS(Bot):
         else:
             set_situation("fail") # not supposed to happen but could happen. if control reaches this point then the bot has some bugs that need to be fixed or it lacks something in its folder environment
             self.logs.log_uncaught_exception(error)
+            await super().on_command_error(ctx, error)
 
 
 
@@ -508,7 +513,7 @@ class GTS(Bot):
         if no ids are given then it will always gather data no matter who sent the message
         '''
 
-        if (not ids) or ctx.message.author.id in ids:
+        if (not ids) or ctx.author.id in ids or ctx.channel.id in ids:
 
             txt_db << ctx.message.content
 
@@ -539,7 +544,8 @@ class GTS(Bot):
 
 
 
-
+    gt_workout = kintore.WorkoutSchedule.for_gt()
+    workout_notifications_sent = 0
 
 
 
@@ -567,14 +573,49 @@ class GTS(Bot):
 
                 await self.reply(ctx)
 
+                xyz_database = Database('xyz').xyz
+
+                await self.gather_data (
+
+                    ctx,
+
+                    ID_OF.CYNI,
+                    ID_OF.MAWSKEETO,
+                    ID_OF.MAFFEROZZO,
+                    ID_OF.VALACDI,
+                    ID_OF.GREATERTHANGREG,
+                    ID_OF.MAWSKEETOBROTHER,
+                    ID_OF.HIGHGUARD,
+                    ID_OF.XBANANA,
+                    ID_OF.MARCO,
+
+                    txt_db = xyz_database.matthias_bider,
+                    file_db = xyz_database.xyz
+
+                )
+
         except Forbidden:
+
             self.logs.log_forbidden(ctx)
 
 
 
-        xyz_database = Database('xyz').xyz
+        # \/\/\/ 5th of April 2020 workout update \/\/\/
 
-        await self.gather_data(ctx, ID_OF.CYNI, txt_db = xyz_database.matthias_bider, file_db = xyz_database.xyz)
+        wn_sending_times = [tup[0]*60 + tup[1] for tup in ( (0, 0), (18, 30) )]
+        if (self.workout_notifications_sent < len(wn_sending_times)):
+            rn = datetime.now()
+            time_rn = (rn - datetime.combine(date.today(), time(0))).total_seconds() / 60
+            if (time_rn >= wn_sending_times[self.workout_notifications_sent]):
+                await type_n_send (
+                    self.get_user(ID_OF.GT),
+                    'nigga my duty 2 manage ur workout schedule thru pure math\nheres ur fuckin workout 4 today:'
+                    + '\n・do {challenge.pushups} consecutive pushups, then hold a v for {challenge.v_hold} secondz\n・do {challenge.pullups} consecutive pullups and hang urself for {challenge.bar_hold} seconds'.format(challenge = self.gt_workout.for_today())
+                )
+                self.workout_notifications_sent += 1;
+
+
+
 
 
 
@@ -603,7 +644,7 @@ class GTS(Bot):
         storage = global_database.servers[member.guild.id].settings
 
         if "default_channel" in storage:
-            channel = member.guild.get_channel(storage.default_channel)
+            channel = member.guild.get_channel(int(storage.default_channel))
         else:
             channel = member.guild.system_channel
 
@@ -611,7 +652,7 @@ class GTS(Bot):
 
         if channel is None:
             for channel in member.guild.text_channels:
-                if channel.permissions_for(guild.me).send_messages:
+                if channel.permissions_for(member.guild.me).send_messages:
                     break
 
             else:

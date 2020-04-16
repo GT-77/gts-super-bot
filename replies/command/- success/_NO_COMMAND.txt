@@ -1,6 +1,7 @@
 -
 dat ain't a command 2 me
 ur supposed 2 do 7!command not 7!some_shit_i_pulled_out_of_my_arse
+ur supposed 2 do 7!command not 7!some_shit_i_pulled_out_of_my_ass
 dat command ain't existin
 dat command just won't b
 ur command is invalid
@@ -35,6 +36,10 @@ u should do 7!commands if ur not sure what ur doing
 if ur not sure wtf ur doing u should do 7!commands then select a command and if u want 2 b cool and use shortcuts check its 7!help
 if u rly r not sure wtf ur doing do 7!commands
 dats anytin but a command
+tf is dat
+tf does dat mean
+what
+do `7!commands` if ur confused
 
 
 

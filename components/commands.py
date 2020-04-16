@@ -163,6 +163,8 @@ async def help_(ctx, *, command:CommandConverter = None):
     """
     u can do 7!help on any command 2 get help on it
 
+    2 see all commands u can do 7!commands
+
     anythin not provided by 7!help is learned thru immersion
     """
 
@@ -197,8 +199,8 @@ async def scan(ctx, *, save_file = "recent"):
 
     storage = global_database.servers[ctx.guild.id].scans
 
-    if save_file in storage:
-        del storage[save_file]
+    '''if save_file in storage:
+        del storage[save_file]''' # the problem with scanning is at this line !!!
 
     storage = storage[save_file]
 
@@ -265,7 +267,8 @@ async def rerole(ctx, member:Member):
     storage = global_database.servers[member.guild.id].scans.recent
 
     if member.id in storage:
-        await member.edit(reason = "4 my homies", roles = filter(bool, map(ctx.guild.get_role, storage[member.id])))
+
+        await member.edit(reason = "4 my homies", roles = filter(bool, map(ctx.guild.get_role, map(int, storage[member.id]))))
 
 
 
@@ -429,6 +432,12 @@ async def kobayashi (
     witout worrying bout quotes n shit. im lazy to explain so find out urself wat that is bout
     """
 
+    if len(dot_style) * length + len(spacing) * (length - 1) > 2000:
+
+        raise BadArgument
+
+
+
 
 
     if custom_transition is None:
@@ -449,12 +458,24 @@ async def kobayashi (
 
     transition_array = [dot_style] * length
 
+
+
     def array_to_text():
+
         return formatting.bold(spacing.join(transition_array))
+
+
 
     transition_msg = await ctx.send(array_to_text())
 
+
+
+    if not speed:
+        return
+
     delay = 0.5 / speed
+
+
 
     for index in range(length):
 
@@ -535,7 +556,7 @@ async def kobayashi (
     },
     feedback = False,
 )
-# @cooldown (1, 7.7)
+@cooldown (1, 7.7)
 async def xyz(ctx, xyz = 'xyz'):
     'xyz'
 
@@ -543,6 +564,9 @@ async def xyz(ctx, xyz = 'xyz'):
 
     if not ctx.db.xyz:
         raise Exception('xyz')
+
+    if not hasattr(ctx.channel, 'recipient'):
+        await ctx.message.delete()
 
 
     #abc txt  |abc img path| abc file obj
@@ -631,11 +655,11 @@ async def xyz(ctx, xyz = 'xyz'):
 
 
 
-    def high_to_cyni():
+    def _high_to_cyni():
 
         highguard_l = list(highguard)
 
-        highguard_l.sort()
+        highguard_l.sort(key = len)
 
         max_high = highguard_l[-randrange(min(len(highguard_l), 7)) - 1]
 
@@ -669,6 +693,58 @@ async def xyz(ctx, xyz = 'xyz'):
 
         return ' '.join(foundation)
 
+
+
+
+
+
+
+
+
+
+    def _high_to_cyni_ver_2():
+
+        ctx.log('looks like _high_to_cyni_ver_2 is imbound')
+
+        highguard_l = list(highguard)
+
+        highguard_l.sort(key = len)
+
+        max_high = highguard_l[-randrange(min(len(highguard_l), 7)) - 1]
+
+
+        rt = list()
+
+        highguard_l.reverse()
+
+
+        for content in highguard_l:
+
+            if sum(len(string) for string in rt) > 1007:
+
+                break
+
+            else:
+
+                rt.append(content)
+
+
+        return ' '.join(rt)
+
+
+
+
+
+
+
+
+    def high_to_cyni():
+
+        choice = randrange(102)
+
+        if choice < 66:
+
+            return _high_to_cyni()
 
 
 
@@ -748,7 +824,7 @@ async def xyz(ctx, xyz = 'xyz'):
         if _321:
             for i in range(randrange(1, 666)):
                 ur_pace_is_leisurely = +_321
-                if len(ur_pace_is_leisurely) < 1500:
+                if len(ur_pace_is_leisurely) < 1500 and 'xyz' not in ur_pace_is_leisurely:
                     highguard.add(ur_pace_is_leisurely)
         else:
             highguard = None
@@ -818,9 +894,10 @@ async def xyz(ctx, xyz = 'xyz'):
 
 
 
-
+    '''
     async def xyz_slapback():
         await ctx.send(ctx.message.content)
+    '''
 
 
 
@@ -870,7 +947,7 @@ async def xyz(ctx, xyz = 'xyz'):
 
 
 
-
+    '''
     async def xyz_m_avatar():
 
         m = lol_heres_a_member()
@@ -886,6 +963,7 @@ async def xyz(ctx, xyz = 'xyz'):
 
         await ctx.send (f'{lol_heres_a_member().display_name}\'s avatar is {lol_heres_a_member().avatar_url}')
 
+    '''
 
 
 
@@ -894,11 +972,11 @@ async def xyz(ctx, xyz = 'xyz'):
 
 
 
-
-
+    '''
     async def xyz_distortion():
 
         await ctx.send ('distortion')
+    '''
 
 
 
@@ -908,11 +986,11 @@ async def xyz(ctx, xyz = 'xyz'):
 
     async def xyz_r_marco_message():
 
-        if one_in(2):
-            async for msg in ctx.channel.history(limit = 700):
-                if msg.author.id == ID_OF.MARCO:
-                    await ctx.send (msg.content)
-                    return
+        #if one_in(2):
+        async for msg in ctx.channel.history(limit = 700):
+            if msg.author.id == ID_OF.MARCO:
+                await ctx.send (msg.content)
+                return
 
 
         M_STR = "lö+p#.pö+üjuiolfdsfddsfä+ü#+ä+ä#+"
@@ -942,7 +1020,7 @@ async def xyz(ctx, xyz = 'xyz'):
 
 
 
-
+    '''
     async def xyz_ultra_swap():
 
         msg = await xyz_xyz()
@@ -952,6 +1030,7 @@ async def xyz(ctx, xyz = 'xyz'):
             await sleep(7)
 
             await msg.edit ( content = high_to_cyni() )
+    '''
 
 
 
@@ -981,6 +1060,85 @@ async def xyz(ctx, xyz = 'xyz'):
         else:
 
             await ctx.send ( sd )
+
+
+
+    async def xyz_vaccum(min_ = 7, max_ = 12):
+
+        nonlocal highguard
+
+        highguard = set()
+
+        async for msg in ctx.history(limit = randrange(min_, max_)):
+
+            if ('xyz' not in msg.content):
+
+                highguard.add(msg.content)
+
+        return await ctx.send ( high_to_cyni() )
+
+
+
+    async def xyz_long_vaccum():
+
+        return await xyz_vaccum(27, 77)
+
+
+
+
+
+
+    async def xyz_xyz_vaccum(min_ = 7, max_ = 12):
+
+        if gen_high_marco_lxyz() is not None:
+
+            ctx.send('xyz')
+            return
+
+
+        async for msg in ctx.history(limit = randrange(min_, max_)):
+
+            if ('xyz' not in msg.content):
+
+                highguard.add(msg.content)
+
+
+        if highguard is None:
+            dreams_of_cyanide = None
+        else:
+            dreams_of_cyanide = high_to_cyni()
+
+
+
+        return await ctx.send (dreams_of_cyanide, file = love_xyz)
+
+
+
+
+
+
+
+    async def xyz_long_xyz_vaccum(min_ = 7, max_ = 12):
+
+        await xyz_xyz_vaccum(27, 77)
+
+
+
+
+
+
+    async def xyz_marco_l_msg_enhancement():
+
+        if one_in(2):
+            async for msg in ctx.history(limit = 700):
+                if msg.author.id == ID_OF.MARCO:
+                    # await ctx.send (msg.content + ' https://cdn.discordapp.com/avatars/457533786268368907/20c320802eda43e0ef4b3a93d8fe2e58.png?size=128')
+                    await ctx.send (msg.content)
+                    return
+
+        ctx.log('falling back to xyz_long_vaccum')
+
+        await xyz_long_vaccum()
 
 
 
@@ -1048,7 +1206,7 @@ async def xyz(ctx, xyz = 'xyz'):
 
 _dictionary_arranger = lambda rt: formatting.bold(rt[0]) + '\n\n\n' + f'\n\n{formatting.code("/" * 47)}\n\n'.join(rt[1])
 _dictionary_necessary_attr = 'number', 'function', 'text', 'examples', 'author.name', 'creation.date'
-_can_define = ID_OF.GT, ID_OF.CYNI
+_can_define = ID_OF.GT, ID_OF.CYNI, ID_OF.MAFFEROZZO, ID_OF.HIGHGUARD, ID_OF.MARCO, ID_OF.MAWSKEETO, ID_OF.ERASEDFROMEXISTENCE
 
 
 def _def_has_attr(ptr, attr):
@@ -1092,10 +1250,11 @@ def _valid_definition(ptr):
 
     brief = 'the ascended dictionary',
 
-    restrictions = (
-        'anyone can read definitions',
-        'currently only gt and cyni can add definitions',
-    ),
+    # restrictions = (
+    #     'anyone can read definitions',
+    #     'currently only gt, cyni, mafferozzo, highguard, mawskeeto, and marco can add definitions',
+    #     'erasedfromexistence is not exactly ascended as of now but he can write cuz he cool',
+    # ),
 
     examples = {
 
@@ -1330,9 +1489,9 @@ async def definition(ctx, word = None, index:int = 1) -> _dictionary_arranger:
 
     brief = 'adds a word definition to the ascended dictionary',
 
-    restrictions = (
-        'currently only gt and cyni can do dis',
-    ),
+#    restrictions = (
+#        'only ascended niggas can do dis (gt, cyni, mafferozzo, highguard, marco, maw)',
+#    ),
 
     examples = {
 
@@ -1346,12 +1505,11 @@ mark: oh shit" "i will some_word u!"''': 'and u just added a new definition for 
 
 )
 
-@only_accept_id(*_can_define)
+# @only_accept_id(*_can_define)
 
 async def define(ctx, word, number:int, grammatical_function, definition_text, *examples):
 
     '''
-
     adding a definition is extremely ez, u just have to fill out all parameters
 
     let's walk thru each parameter
@@ -1363,16 +1521,12 @@ async def define(ctx, word, number:int, grammatical_function, definition_text, *
     if the word already has a definition written on the slot u've given (the slot is taken)
     and the definition written there is not written by u, then i will reject u
 
-    grammatical_function - must be one of the following: "noun", "verb", "adjective", "expression". if not then i will refuse 2 take ur definition into consideration
+    grammatical_function - must be one of the following: "noun", "verb", "adjective", "adverb", "expression". if not then i will refuse 2 take ur definition into consideration
     this is what role the word has gramatically, in the definition u gave. u must be above the age of -2 to understand dis
 
     definition_text - the body of the definition
-    u should almost always surround this in quotes. please for the love of god n jesus surround it in quotes
+    u should almost always surround dis in quotes. please for the love of god n jesus surround it in quotes
     ur definition text can span multiple lines. (for idiots: use enter + shift to add new space witout sending ur message)
-    like dis:
-    7!dict define some_word 3 noun "dis is my definition text
-    and dis is the second line
-    and dis is the third line" "and dis is my first example" "and dis is my second example"
 
     examples - u can add as many examples as u want
     and they can also span multiple lines
@@ -1382,12 +1536,13 @@ async def define(ctx, word, number:int, grammatical_function, definition_text, *
 
     IMPORTANT: u can't delete definitons, so try 2 not make mistakes
     if u rly want ur definiton 2 b removed u can prolly ask gt 2 do it manually
-
     '''
 
     creation_datetime = datetime.now()
     creation_date = creation_datetime.date()
     creation_time = creation_datetime.time()
+
+    word = word.lower()
 
 
 
@@ -1411,7 +1566,7 @@ async def define(ctx, word, number:int, grammatical_function, definition_text, *
 
         or
 
-        grammatical_function not in ('noun', 'verb', 'adj.', 'expr.')
+        grammatical_function not in ('noun', 'verb', 'adj.', 'adverb', 'expr.')
 
     ):
 
@@ -1468,6 +1623,7 @@ async def define(ctx, word, number:int, grammatical_function, definition_text, *
 )
 
 async def words(ctx, display:int = 13) -> lambda rt: ', '.join(map(formatting.bold_code, rt[0])) + ' ' + rt[1]:
+
     '''
     by default shows 13 random words, but u can set dat 2 whatever u desire between 0 and 77
     (i'm talkin bout the display parameter)
@@ -1555,6 +1711,208 @@ initialize_help(dictionary, group = True)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command (
+
+    aliases = ['role_powers', 'rolepower'],
+
+    brief = 'shows u a leaderboard of the servers roles based on thier power',
+
+    examples = {'': 'boom'},
+
+    feedback = False,
+
+)
+
+async def rolepowers(ctx, role:Role = None):
+
+    '''
+    this command is built to spot sneaky permissions tucked in roles
+    especially useful in gt's discord server where the roles look like evan asshair
+
+    by power i mean how much dmg they can do n shit
+    and role permissions are expressed thru emojis. u figure out urself what permission each emoji represents (dere are a few exceptions like [# :tools:] and TTS)
+
+    if u specify the role paramter i will only show u dat role and its correspondin emojis but why would u do dat
+    '''
+
+    def role_formatter(number = 69, role_name = 'ur_mom', perm_list = [':house_with_garden:']):
+
+        return '{}. {} {}'.format(number, role_name, ' '.join(perm_list))
+
+
+
+    def perms_to_emoji_list(perms):
+
+        conv_dict = {
+
+            'kick_members': ':mans_shoe:',
+            'ban_members': ':hammer:',
+            'administrator': ':star:',
+            'manage_channels': '[# :tools:]',
+            'manage_guild': ':flag_ro:',
+            'priority_speaker': ':loudspeaker:',
+            'send_tts_messages': '*TTS*',
+            'manage_messages': ':envelope:',
+            'mention_everyone': '**@**',
+            'mute_members': ':mute:',
+            'deafen_members': ':headphones:',
+            'manage_nicknames': ':newspaper:',
+            'manage_roles': ':ideograph_advantage:',
+            'manage_emojis': ':dizzy_face:',
+
+        }
+
+        rt = list()
+
+        for permission in conv_dict:
+
+            if (getattr(perms, permission)):
+
+                rt.append(conv_dict[permission])
+
+
+        return rt
+
+
+
+    class RoleOmg:
+
+        def __init__(self, role):
+
+            self.role = role
+            self.name = role.name
+            self.perms = perms_to_emoji_list(role.permissions)
+
+            if ':star:' in self.perms:
+
+                self.power = 1337
+
+            else:
+
+                self.power = len(self.perms)
+
+                if '*TTS*' in self.perms:
+                    self.power -= 1
+
+
+
+    if role is None:
+
+        roles = list(map(RoleOmg, ctx.guild.roles))
+
+        roles.sort(key = lambda role: role.power, reverse = True)
+
+        rt = list()
+
+        for rank, role in enumerate(roles):
+
+            if sum(len(string) for string in rt) > 1500:
+                rt.append('... n more')
+                break
+
+            rt.append(role_formatter(rank + 1, role.name, role.perms))
+
+    else:
+
+        roleomg = RoleOmg(role)
+
+        rt = [role_formatter(69, roleomg.name, roleomg.perms), '\n\nmembers that have this role:\n\n']
+
+        for member in ctx.guild.members:
+
+            if sum(len(string) for string in rt) > 1500:
+                rt.append('... n more')
+                break
+
+            if role in member.roles:
+
+                rt.append(member.display_name)
+
+        if len(rt) == 2:
+
+            rt.append('none lol')
+
+
+    ctx.rt = '\n'.join(rt).replace('@everyone', '`@everyone`')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command (
+
+    aliases = ['rule_34', 'r34', 'e621'],
+
+    brief = 'dat',
+
+)
+
+async def rule34(ctx):
+
+    '''
+    u should consider movin out of russia
+    '''
+
+    pass
 
 
 
@@ -1816,7 +2174,7 @@ async def commands(ctx) -> lambda itr: ' '.join(map(formatting.bold_code, itr)):
 
 @gts.command (
 
-    aliases = ['kys', 'kill_yourself', 'die', 'kill_urself', 'shut_down'],
+    aliases = ['kys', 'kill_yourself', 'die', 'kill_urself', 'shut_down', 'fall_asleep'],
 
     brief = 'makes me go 2 sleep',
 
@@ -1824,11 +2182,14 @@ async def commands(ctx) -> lambda itr: ' '.join(map(formatting.bold_code, itr)):
 
 )
 
+@is_owner()
+
 async def shutdown(ctx):
     '''
     zzz
     '''
 
+    gts.shutdown = True
     await gts.close()
 
 
@@ -1856,10 +2217,18 @@ async def shutdown(ctx):
 async def version(ctx):
 
     '''
-    i'm currently under testin
+    my only current glitch is ironicallyy wit da scan command
+    other than dat my code has not been touched for almost a year
+    so dad is mistreatin me
+
+    version history:
+    `2.0.0` (expect to find glitches and b ready 2 report)
+    `2.1.0`
+
+    dats it
     '''
 
-    ctx.rt = '`2.0.0` (expect to find glitches and b ready 2 report)'
+    ctx.rt = '`2.2.0`'
 
 
 
@@ -1900,7 +2269,11 @@ async def version(ctx):
 
 @is_owner()
 
-async def _send_message(ctx, location:Union[TextChannel, User], *, content):
+async def _send_message(ctx, location:Union[TextChannel, User], *, content = None):
+
+    '''
+    ur not supposed to know of this command but ok
+    '''
 
     if 'sends' in ctx.database:
 
@@ -1917,15 +2290,124 @@ async def _send_message(ctx, location:Union[TextChannel, User], *, content):
         await (ctx.database.attachments[sends] << attachment)
 
 
+    if ctx.database.attachments[sends]:
 
-    await location.send(content, files = [File(path) for path in ctx.database.attachments[sends]])
+        await location.send(content, files = [File(path) for path in ctx.database.attachments[sends]])
+
+    else:
+
+        await type_n_send(location, content)
 
     if ctx.message.attachments:
-        
+
         ctx.database.sends = sends + 1
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command (
+
+    aliases = ['message_general', 'messagegeneral', 'message_gen', 'messagegen', 'msg_gen', 'msggen'],
+
+    restrictions = ['ok'],
+
+)
+
+async def _message_general(ctx, *, content = None):
+
+    '''
+    ur not supposed to know of this command but ok
+    '''
+
+    await _send_message.callback(ctx, gts.get_channel(ID_OF.GENERAL), content = content)
+
+
+
+
+
+
+@gts.command (
+
+    aliases = ['announce', 'message_announcements', 'messageannouncements', 'msg_announcements', 'msgannouncements'],
+
+    restrictions = ['ok'],
+
+)
+
+async def _announce(ctx, *, content = None):
+
+    '''
+    ur not supposed to know of this command but ok
+    '''
+
+    await _send_message.callback(ctx, gts.get_channel(ID_OF.ANNOUNCEMENTS), content = content)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@gts.command(aliases = ['someshitipulledoutofmyarse', 'someshitipulledoutofmyass', 'some_shit_i_pulled_out_of_my_ass', 'some_shit_i_pulled_out_of_my_arse'])
+
+async def _some_shit_i_pulled_out_of_my_ass(ctx):
+
+    ctx
+                            # i watch loli porn
+    pass
 
 
 
