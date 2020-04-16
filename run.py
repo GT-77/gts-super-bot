@@ -48,9 +48,6 @@ with open('token.txt') as token_file:
 
 
 
-
-gts.shutdown = False
-
 '''
 while True:
 
