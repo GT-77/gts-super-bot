@@ -1,5 +1,5 @@
 '''
-this module is self-explainatory
+this module is self-explanatory
 '''
 
 
@@ -32,5 +32,33 @@ ID_OF = SimpleNamespace (
     GENERAL = 314400771796107265,
     ANNOUNCEMENTS = 407188921945030656,
 
+)
+
+
+
+PATH_OF = SimpleNamespace (
+
+    REPLIES = 'replies',
+    PRESENCES = 'replies/presences.txt',
+    TOKEN = 'token.txt',
 
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#

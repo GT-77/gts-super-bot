@@ -221,7 +221,7 @@ def indent(string, amount = 1, style = '   '):
 
 
 
-def console(enter = '>>> ', exit_ = 'exit()'):
+def console(enter = '>>> ', exit_ = 'exit()', scope = dict()):
 
     input_ = input(enter)
 
@@ -230,17 +230,3 @@ def console(enter = '>>> ', exit_ = 'exit()'):
         print(repr(eval(input_)))
 
         input_ = input(enter)
-
-'''
-
-def console(enter = '>>> ', exit_ = 'exit()'):
-
-    input_ = input('>>> ')
-
-    while input_ != 'exit()':
-
-        print(repr(eval(input_)))
-
-        input_ = input('>>> ')
-
-'''

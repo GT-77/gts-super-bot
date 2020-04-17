@@ -29,7 +29,7 @@ from .database import Database, GlobalDatabase
 
 from .dialogue import command_reply, ping_reply, passive_reply
 
-from .utilities import one_in, initialize_help, formatting, Logs, ID_OF
+from .utilities import one_in, initialize_help, formatting, Logs, ID_OF, Path
 
 
 
@@ -141,7 +141,7 @@ class GTS(Bot):
 
 
 
-        self.logs = Logs()
+        self.logs = Logs(Path('databases') / 'logs' / 'logging' / f'{date.today()}.logs')
 
 
 
@@ -198,34 +198,20 @@ class GTS(Bot):
 
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             def command(*args, **kwargs):
-
                 # # # # # # # # # # # # # # # # # # # # # # # # # # #
                 def decorator(func):
-
                     rt_ = Group.command(rt, *args, **kwargs)(func)
-
                     rt_.options = kwargs
-
                     rt_.options.setdefault('feedback', True)
-
                     initialize_help(rt_)
-
                     return rt_
                 # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
                 return decorator
             # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
 
-
-
             rt.command = command
-
-
-
-
-
             return rt
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -309,7 +295,7 @@ class GTS(Bot):
 
 
 
-        self.logs.log_invoke(ctx)
+        self.logs.invoke_log(ctx)
 
         await super().invoke(ctx)
 
@@ -481,7 +467,7 @@ class GTS(Bot):
                 break
         else:
             set_situation("fail") # not supposed to happen but could happen. if control reaches this point then the bot has some bugs that need to be fixed or it lacks something in its folder environment
-            self.logs.log_uncaught_exception(error)
+            self.logs.uncaught_exception_log(error)
             await super().on_command_error(ctx, error)
 
 
@@ -556,14 +542,12 @@ class GTS(Bot):
 
 
         if msg.author == self.user:
-
-            self.logs.log_sent_message(ctx)
-
+            self.logs.sent_message_log(ctx)
             return
 
 
 
-        self.logs.log_message(ctx)
+        self.logs.new_message_log(ctx)
 
 
 
@@ -572,7 +556,6 @@ class GTS(Bot):
             if not await self.invoke(ctx):
 
                 await self.reply(ctx)
-
                 xyz_database = Database('xyz').xyz
 
                 await self.gather_data (
@@ -610,7 +593,7 @@ class GTS(Bot):
                 await type_n_send (
                     self.get_user(ID_OF.GT),
                     'nigga my duty 2 manage ur workout schedule thru pure math\nheres ur fuckin workout 4 today:'
-                    + '\n・do {challenge.pushups} consecutive pushups, then hold a v for {challenge.v_hold} secondz\n・do {challenge.pullups} consecutive pullups and hang urself for {challenge.bar_hold} seconds'.format(challenge = self.gt_workout.for_today())
+                    + '\n・do {challenge.pushups} consecutive pushups, then hold a plank for {challenge.v_hold} secondz\n・do {challenge.pullups} consecutive pullups and hang urself for {challenge.bar_hold} seconds'.format(challenge = self.gt_workout.for_today())
                 )
                 self.workout_notifications_sent += 1;
 
@@ -639,7 +622,7 @@ class GTS(Bot):
 
     async def on_member_join(self, member):
 
-        self.logs.log_member_join(member)
+        self.logs.member_join_log(member)
 
         storage = global_database.servers[member.guild.id].settings
 
@@ -684,7 +667,7 @@ class GTS(Bot):
         before_ctx = await self.get_context(before)
         after_ctx = await self.get_context(after)
 
-        self.logs.log_message_edit(before_ctx, after_ctx)
+        self.logs.message_edit_log(before_ctx, after_ctx)
 
 
 
@@ -704,7 +687,7 @@ class GTS(Bot):
 
         ctx = await self.get_context(msg)
 
-        self.logs.log_message_delete(ctx)
+        self.logs.message_delete_log(ctx)
 
 
 

@@ -13,7 +13,7 @@ from components import gts
 @gts.event
 async def on_ready():
 
-    gts.logs.log_awoken() # .log_ready() works too but log_awoken looks / sounds cooler
+    gts.logs.awoken_log() # .ready_log() works too but log_awoken looks / sounds cooler
 
     while True:
 

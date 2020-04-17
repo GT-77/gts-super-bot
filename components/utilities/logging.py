@@ -45,14 +45,14 @@ LOG_STYLE = SimpleNamespace (
     UNCAUGHT_EXCEPTION = ('<X>', 'i got an uncaught exception, pls fix me gt'),
     FATAL_UNCAUGHT_EXCEPTION = ('<X _ X>', 'a fatal uncaught exception fucked up the run(...) call entirely. i think i\'m gonna try to try to start it back up.'),
 
-    DM_COMMAND_MSG = ('   ', '(log from {ctx.command.qualified_name}) invoked in {ctx.author.display_name}\'s wet #cker candy sugar ({ctx.author.id})) -> '),
-    COMMAND_MSG = ('  ', '(log from {ctx.command.qualified_name} invoked in {ctx.channel.name} ({ctx.channel.id})) -> '),
+    DM_COMMAND_LOG = ('<(C)>', 'received log from {ctx.command.qualified_name}) invoked in {ctx.author.display_name}\'s wet #cker candy sugar ({ctx.author.id})'),
+    COMMAND_LOG = ('<C>', 'received log from {ctx.command.qualified_name} invoked in {ctx.channel.name} ({ctx.channel.id})'),
 
     MEMBER_JOIN = ('/MJ/', '{member.display_name} ({member.id}) has joined {member.guild.name} ({member.guild.id})'),
 
     MESSAGE_EDIT = ('[*MSG]', '{ctx.author.display_name} ({ctx.author.id}) has edited their message'),
 
-    MESSAGE_DELETE = ('[X]MSG]', '{ctx.author.display_name} ({ctx.author.id}) has deleted their message'),
+    MESSAGE_DELETE = ('[X]MSG]', '{ctx.author.display_name}\'s ({ctx.author.id}) message got deleted'),
 
 
 
@@ -62,85 +62,65 @@ LOG_STYLE = SimpleNamespace (
 
 
 
-
-
-
-
-
-
-
-
     SEP = ' ',
     # INDENT = '    ',
     LOG_SEPARATION = '\n\n\n\n\n',
     SUBLOG_SEPARATION = '\n\n',
     BRANCHING_MARKER = ':',
-
-
+    TIME_SEP = '\n',
 )
 
 
 
+class DataAttribute:
+
+    def __init__(self, name, value):
+        self.string = f'{name}: {value}'
+
+    def  __str__(self):
+        return self.string
+
+    @classmethod
+    def get_attributes(cls, obj, *attributes):
+
+        return (
+            cls(attribute.replace('_', ' '), obj.__getattribute__(attribute))
+            for attribute in attributes
+        )
+
+    @classmethod
+    def uncaught_exception_info(cls, exc):
+        return cls(exc.__class__.__name__, exc)
 
 
 
 
-class Log:
 
 
+class Sublog:
 
-    def __init__(self, tag, header = '', *sublogs, **variables):
-
-        if not isinstance(header, str):
-
-            sublogs = (header,) + sublogs
-            header = ''
-
-
-
-        self.tag = tag
+    def __init__(self, header, *sublogs, **variables):
         self.header = header
         self.sublogs = sublogs
         self.vars = variables
 
-        if 'root_log' in variables:
-            self.datetime = datetime.now()
-        else:
-            self.datetime = None
-
 
 
     def __str__(self):
-
-        if self.datetime is None:
-            time = str()
-        else:
-            time = str(self.datetime) + '\n'
-
-        tag = self.tag
-
+        # print(self.header.header, self.header.sublogs, self.header.vars)
         header = self.header.format(**self.vars)
-
-
-
-        root = tag
-
-        if header:
-            root += LOG_STYLE.SEP + header
-
-
-
         branches = LOG_STYLE.SUBLOG_SEPARATION.join(map(indent, self.sublogs))
 
         if branches:
-            root += LOG_STYLE.BRANCHING_MARKER + LOG_STYLE.SUBLOG_SEPARATION
+            header += LOG_STYLE.BRANCHING_MARKER + LOG_STYLE.SUBLOG_SEPARATION
 
-        return time + root + branches
-
-
+        return header + branches
 
 
 
+    @classmethod
+    def get_list_attribute(cls, obj, attribute, attr_to_Sublog):
+        return cls ( attribute, *map(attr_to_Sublog, obj.__getattribute__(attribute)))
 
 
 
@@ -148,28 +128,32 @@ class Log:
     def message_info(cls, ctx):
 
         return (
-
-            cls('content:', repr(ctx.message.content)),
-            cls('ID:', str(ctx.message.id)),
-            cls('sent at:', str(ctx.message.created_at)),
-            cls('edited at:', str(ctx.message.edited_at)),
-            cls('jump url:', ctx.message.jump_url),
-
-            cls (
-                'attachment(s)',
-                * (
-
-                    cls (
-                        att.filename,
-                        cls('url:', att.url),
-                        cls('proxy url:', att.proxy_url)
-                    )
-
-                    for att in ctx.message.attachments
-
-                )
+            *DataAttribute.get_attributes ( ctx.message,
+                'content',
+                'id',
+                'created_at',
+                'edited_at',
+                'jump_url',
             ),
 
+            cls.get_list_attribute ( ctx.message, 'attachments',
+                lambda attachment:
+                    cls (
+                        attachment.filename,
+                        *DataAttribute.get_attributes(attachment, 'url', 'proxy_url')
+                    )
+            )
+        )
+
+
+
+    @classmethod
+    def member_info(cls, member):
+
+        return DataAttribute.get_attributes ( member,
+            'joined_at',
+            'status',
+            'avatar_url',
         )
 
 
@@ -177,458 +161,178 @@ class Log:
 
 
 
+class Log(Sublog):
 
+    def __init__(self, tag, header, *sublogs, **variables):
+        super().__init__(tag + LOG_STYLE.SEP + header, *sublogs, **variables)
 
+    def __str__(self):
+        return str(datetime.now()) + LOG_STYLE.TIME_SEP + super().__str__()
 
 
 
+def tag_and_header(log_style):
+    selection = LOG_STYLE.__getattribute__(log_style)
+    return selection[0], selection[1]
 
+# FATAL UNCAUGHT EXCEPTION will be missing
 
+class _BasicLog(Log):
+    def __init__(self, STYLE, *sublogs, **variables):
+        super().__init__(*tag_and_header(STYLE), *sublogs, **variables)
 
+class _BasicCtxLog(_BasicLog):
+    def __init__(self, STYLE, ctx):
+        super().__init__(STYLE, ctx = ctx)
 
-    @classmethod
-    def msg(cls, ctx):
+class _BasicMessageLog(_BasicLog):
+    def __init__(self, STYLE, ctx):
+        super().__init__(STYLE, *Sublog.message_info(ctx), ctx = ctx)
 
-        return cls (
 
-            LOG_STYLE.MESSAGE[0],
-            LOG_STYLE.MESSAGE[1],
+class AwokenLog(_BasicLog):
+    def __init__(self):
+        super().__init__('AWOKEN')
 
-            *cls.message_info(ctx),
+class MemberJoinLog(_BasicLog):
+    def __init__(self, member):
+        super().__init__('MEMBER_JOIN', member = member, *Sublog.member_info(member))
 
-            ctx = ctx,
-            root_log = True,
+class UncaughtExceptionLog(_BasicLog):
+    def __init__(self, exc):
+        super().__init__('UNCAUGHT_EXCEPTION', DataAttribute.uncaught_exception_info(exc))
 
-        )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @classmethod
-    def dm(cls, ctx):
-
-        rt = cls.msg(ctx)
-
-        rt.tag = LOG_STYLE.DM[0]
-        rt.header = LOG_STYLE.DM[1]
-
-        return rt
-
-
-
-
-
-
-
-    @classmethod
-    def message(cls, ctx):
-
-        if ctx.guild is None:
-
-            return cls.dm(ctx)
-
-        else:
-
-            return cls.msg(ctx)
-
-
-
-
-
-
-
-    @classmethod
-    def sent_message(cls, ctx):
-
-        if ctx.guild is None:
-
-            style = LOG_STYLE.SENT_DM
-
-        else:
-
-            style = LOG_STYLE.SENT_MESSAGE
-
-
-
-        return cls (
-
-            style[0],
-            style[1],
-
-            *cls.message_info(ctx),
-
-            ctx = ctx,
-            root_log = True,
-
-        )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @classmethod
-    def invoke(cls, ctx):
-
-        if ctx.command is ctx.guild is None:
-
-            style = LOG_STYLE.UNKNOWN_COMMAND_DM_INVOKE
-
-        elif ctx.command is None:
-
-            style = LOG_STYLE.UNKNOWN_COMMAND_INVOKE
-
-        elif ctx.guild is None:
-
-            style = LOG_STYLE.DM_INVOKE
-
-        else:
-
-            style = LOG_STYLE.INVOKE
-
-
-
-
-        return cls (
-
-            style[0],
-            style[1],
-
-            ctx = ctx,
-            root_log = True,
-
-        )
-
-
-
-
-
-
-
-
-    @classmethod
-    def detected_function_call(cls, ctx):
-
-        style = LOG_STYLE.DETECTED_FUNCTION_CALL
-
-        return cls (
-
-            style[0],
-            style[1],
-
-            ctx = ctx,
-            root_log = True,
-
-        )
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @classmethod
-    def forbidden(cls, ctx):
-
-        return cls (
-
-            LOG_STYLE.FORBIDDEN[0],
-            LOG_STYLE.FORBIDDEN[1],
-
-            ctx = ctx,
-            root_log = True,
-
-        )
-
-
-
-    @classmethod
-    def command_log(cls, ctx, sending):
-
-        if ctx.guild is None:
-
-            style = LOG_STYLE.DM_COMMAND_MSG
-
-        else:
-
-            style = LOG_STYLE.COMMAND_MSG
-
-
-
-        return cls (
-
-            style[0],
-            style[1] + str(sending),
-
-            ctx = ctx,
-            root_log = True,
-
-        )
-
-
-
-    @classmethod
-    def message_edit(cls, before_ctx, after_ctx):
-
-        return cls (
-
-            LOG_STYLE.MESSAGE_EDIT[0],
-            LOG_STYLE.MESSAGE_EDIT[1],
-
-            cls('before', *cls.message_info(before_ctx)),
-            cls('after', *cls.message_info(after_ctx)),
-
+class MessageEditLog(_BasicLog):
+    def __init__(self, before_ctx, after_ctx):
+        super().__init__ (
+            'MESSAGE_EDIT',
+            Sublog('before', *Sublog.message_info(before_ctx)),
+            Sublog('after', *Sublog.message_info(after_ctx)),
             ctx = before_ctx,
-            root_log = True,
-
         )
 
+class CommandLog(_BasicCtxLog):
+    def __init__(self, ctx, sending):
+        super().__init__('DM_COMMAND_LOG' if ctx.guild is None else 'COMMAND_LOG', ctx, sending)
 
 
-    @classmethod
-    def message_delete(cls, ctx):
 
-        return cls (
+def _basic_message_log_class(STYLE):
+    class rt(_BasicMessageLog):
+        def __init__(self, ctx):
+            super().__init__(STYLE, ctx)
+    return rt
 
-            LOG_STYLE.MESSAGE_DELETE[0],
-            LOG_STYLE.MESSAGE_DELETE[1],
+def _basic_log_class(STYLE):
+    class rt(_BasicCtxLog):
+        def __init__(self, ctx):
+            super().__init__(STYLE, ctx)
+    return rt
 
-            *cls.message_info(ctx),
+# DM = direct message
+# IM = indirect message (sent thru server)
 
-            ctx = ctx,
-            root_log = True,
+_NewIMLog = _basic_message_log_class('MESSAGE')
 
-        )
+_NewDMLog = _basic_message_log_class('DM')
 
+_SentIMLog = _basic_message_log_class('SENT_MESSAGE')
 
+_SentDMLog = _basic_message_log_class('SENT_DM')
 
-    @classmethod
-    def member_join(cls, member):
+MessageDeleteLog = _basic_message_log_class('MESSAGE_DELETE')
 
-        return cls (
+ForbiddenLog = _basic_log_class('FORBIDDEN')
 
-            LOG_STYLE.MEMBER_JOIN[0],
-            LOG_STYLE.MEMBER_JOIN[1],
+ReadyLog = AwokenLog
 
-            member = member,
-            root_log = True,
+AsleepLog = _basic_log_class('ASLEEP')
 
-        )
+DetectedFunctionCallLog = _basic_log_class('DETECTED_FUNCTION_CALL')
 
+_UnknownCommandDMInvoke = _basic_log_class('UNKNOWN_COMMAND_DM_INVOKE')
 
+_UnknownCommandIMInvoke = _basic_log_class('UNKNOWN_COMMAND_INVOKE')
 
+_KnownCommandDMInvoke = _basic_log_class('DM_INVOKE')
 
-    @classmethod
-    def awoken(cls):
+_KnownCommandIMInvoke = _basic_log_class('INVOKE')
 
-        return cls (
 
-            LOG_STYLE.AWOKEN[0],
-            LOG_STYLE.AWOKEN[1],
 
-            root_log = True,
+def NewMessageLog(ctx):
+    if ctx.guild is None:
+        return _NewDMLog(ctx)
+    return _NewIMLog(ctx)
 
-        )
+def SentMessageLog(ctx):
+    if ctx.guild is None:
+        return _SentDMLog(ctx)
+    return _SentIMLog(ctx)
 
+def InvokeLog(ctx):
+    if ctx.command is ctx.guild is None:
+        return _UnknownCommandDMInvoke(ctx)
+    if ctx.command is None:
+        return _UnknownCommandIMInvoke(ctx)
+    if ctx.guild is None:
+        return _KnownCommandDMInvoke(ctx)
+    return _KnownCommandIMInvoke(ctx)
 
 
-    @classmethod
-    def asleep(cls):
 
-        return cls (
 
-            LOG_STYLE.ASLEEP[0],
-            LOG_STYLE.ASLEEP[1],
 
-            root_log = True,
 
-        )
-
-
-
-
-
-
-
-    @classmethod
-    def uncaught_exception_info(cls, exc):
-
-        return (
-
-            cls (exc.__class__.__name__ + ':', str(exc)),
-
-        )
-
-
-
-
-    @classmethod
-    def uncaught_exception(cls, exc):
-
-        return cls (
-
-            LOG_STYLE.UNCAUGHT_EXCEPTION[0],
-            LOG_STYLE.UNCAUGHT_EXCEPTION[1],
-
-            *cls.uncaught_exception_info(exc),
-
-            root_log = True,
-
-        )
-
-
-
-    @classmethod
-    def fatal_uncaught_exception(cls, exc):
-
-        return cls (
-
-            LOG_STYLE.FATAL_UNCAUGHT_EXCEPTION[0],
-            LOG_STYLE.FATAL_UNCAUGHT_EXCEPTION[1],
-
-            *cls.uncaught_exception_info(exc),
-
-            root_log = True,
-
-        )
-
-
-
-
-
-
-
-
-
-
-
-
-
-def basic_log_method(log_type):
+def logging_function(log_cls):
 
     def rt(self, *args, **kwargs):
-
-        self._add_log(log_type(*args, **kwargs))
+        return self.write(log_cls(*args, **kwargs))
 
     return rt
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BUFFER_SIZE = 7
-
 
 class Logs:
 
+    def __init__(self, log_file):
+        self.log_file = log_file # Path(PATH) / 'logging' / f'{date.today()}.logs'
+        self.log_file.assure()
+        self.buffer = list()
 
+    def write(self, obj):
 
-    def __init__(self):
+        self.buffer.append(obj)
+        self.log_file.append(str(obj) + LOG_STYLE.LOG_SEPARATION)
 
-        self. log_file = Path(PATH) / 'logging' / f'{date.today()}.logs'
-        self. log_file.assure()
-
-        self._buffer = list()
-
-
-
-    def _add_log(self, log):
-
-        self._buffer.append(log)
-
-        self.log_file.append(str(log) + LOG_STYLE.LOG_SEPARATION)
-
-        if len(self._buffer) > BUFFER_SIZE:
-            self._buffer.pop(0)
-
-
+        if len(self.buffer) > BUFFER_SIZE:
+            self.buffer.pop(0)
 
     def __str__(self):
-
         return LOG_STYLE.LOG_SEPARATION.join(formatting.codeblock('python\n' + str(log)) for log in self._buffer)
 
-
-
     def __iter__(self):
-
-        yield from self._buffer[::-1]
-
+        yield from self.buffer[::-1]
 
 
 
-
-    log_message = basic_log_method(Log.message)
-
-    log_sent_message = basic_log_method(Log.sent_message)
-
-    log_invoke = basic_log_method(Log.invoke)
-
-    log_detected_function_call = basic_log_method(Log.detected_function_call)
-
-    log_forbidden = basic_log_method(Log.forbidden)
-
-    command_log = basic_log_method(Log.command_log)
-
-    log_message_edit = basic_log_method(Log.message_edit)
-
-    log_message_delete = basic_log_method(Log.message_delete)
-
-    log_member_join = basic_log_method(Log.member_join)
-
-    log_awoken = basic_log_method(Log.awoken)
-
-    log_ready = log_awoken
-
-    log_asleep = basic_log_method(Log.asleep)
-
-    log_uncaught_exception = basic_log_method(Log.uncaught_exception)
-
-    log_fatal_uncaught_exception = basic_log_method(Log.fatal_uncaught_exception)
+    command_log = logging_function(CommandLog)
+    invoke_log = logging_function(InvokeLog)
+    log = logging_function(str)
+    member_join_log = logging_function(MemberJoinLog)
+    uncaught_exception_log = logging_function(UncaughtExceptionLog)
+    message_edit_log = logging_function(MessageEditLog)
+    message_delete_log = logging_function(MessageDeleteLog)
+    awoken_log = logging_function(AwokenLog)
+    ready_log = logging_function(ReadyLog)
+    new_message_log = logging_function(NewMessageLog)
+    sent_message_log = logging_function(SentMessageLog)
 
 
 
-    log = basic_log_method(Log)
+
 
 
 

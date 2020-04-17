@@ -2224,11 +2224,12 @@ async def version(ctx):
     version history:
     `2.0.0` (expect to find glitches and b ready 2 report)
     `2.1.0`
+    `2.2.0` (has been like dis 4 8 months)
 
     dats it
     '''
 
-    ctx.rt = '`2.2.0`'
+    ctx.rt = '`2.2.1`, work in progress'
 
 
 

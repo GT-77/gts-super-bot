@@ -3,6 +3,7 @@ global database/
 replies/
 images/
 files/
+__pycache__/
 token.txt
 spirit token.txt
 metal token.txt
