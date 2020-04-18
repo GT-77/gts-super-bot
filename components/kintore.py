@@ -3,7 +3,8 @@ from datetime import datetime
 
 dif_scale = 3
 
-bar_hold_dif = v_hold_dif = 1.5
+bar_hold_dif = 2
+v_hold_dif = 1.5
 pullup_leniency = 2.5
 
 class DailyChallenge:

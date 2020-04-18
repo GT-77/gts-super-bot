@@ -211,9 +211,9 @@ class MessageEditLog(_BasicLog):
             ctx = before_ctx,
         )
 
-class CommandLog(_BasicCtxLog):
+class CommandLog(_BasicLog):
     def __init__(self, ctx, sending):
-        super().__init__('DM_COMMAND_LOG' if ctx.guild is None else 'COMMAND_LOG', ctx, sending)
+        super().__init__('DM_COMMAND_LOG' if ctx.guild is None else 'COMMAND_LOG', sending, ctx = ctx)
 
 
 

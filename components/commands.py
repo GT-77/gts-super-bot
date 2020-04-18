@@ -565,7 +565,7 @@ async def xyz(ctx, xyz = 'xyz'):
     if not ctx.db.xyz:
         raise Exception('xyz')
 
-    if not hasattr(ctx.channel, 'recipient'):
+    if ctx.guild is not None or ctx.me.permissions_in(ctx.channel).manage_messages:
         await ctx.message.delete()
 
 
