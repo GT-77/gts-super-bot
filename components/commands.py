@@ -204,15 +204,32 @@ async def scan(ctx, *, save_file = "recent"):
 
     storage = storage[save_file]
 
+    log_str = ''
+
+    def log(*args):
+        nonlocal log_str
+        for arg in args:
+            log_str += str(arg) + ' '
+        log_str += '\n'
+
     for member in ctx.guild.members:
 
         member_roles = storage[member.id]
 
-        ctx.log('scanin', member, member.id, '...')
+        log('scanin', member, member.id, '...')
 
+        if member_roles:
+            log('    already has old roles scanned, will reset roles...')
+            ~member_roles
+
+        log('    role time...')
         for role in member.roles:
-
+            log(f'        adding {repr(role)}, a.k.a, {role.id}...')
             member_roles << role.id
+
+        log('member roles is now', member_roles)
+
+    ctx.log(log_str)
 
 
 
@@ -268,7 +285,9 @@ async def rerole(ctx, member:Member):
 
     if member.id in storage:
 
-        await member.edit(reason = "4 my homies", roles = filter(bool, map(ctx.guild.get_role, map(int, storage[member.id]))))
+        await member.edit(reason = '4 my homies in hard times', roles = map(ctx.guild.get_role, map(int, storage[member.id]) ) )
+
+        # await member.edit(reason = "4 my homies", roles = filter(bool, map(ctx.guild.get_role, map(int, storage[member.id]))))
 
 
 
@@ -565,7 +584,7 @@ async def xyz(ctx, xyz = 'xyz'):
     if not ctx.db.xyz:
         raise Exception('xyz')
 
-    if ctx.guild is not None or ctx.me.permissions_in(ctx.channel).manage_messages:
+    if ctx.guild is not None and ctx.me.permissions_in(ctx.channel).manage_messages:
         await ctx.message.delete()
 
 

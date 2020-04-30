@@ -21,7 +21,7 @@ from discord.ext.commands import (
     BadArgument, UserInputError, MissingRequiredArgument, CommandNotFound, CheckFailure, CommandOnCooldown, ArgumentParsingError
 )
 
-from discord import Forbidden
+from discord import Forbidden, Game
 
 
 
@@ -519,6 +519,42 @@ class GTS(Bot):
 
 
 
+    class UserKintore:
+
+        def __init__(self, user, schedule, notification_times):
+
+            self.user = user
+            self.schedule = schedule
+            self.notification_times = notification_times
+
+            self.sends = 0
+            self.notification_message = (
+                'nigga my duty 2 manage ur workout schedule thru pure math' +
+                '\nheres ur fuckin workout 4 today:' +
+                '\n・do {challenge.pushups} consecutive pushups,' +
+                'then hold a plank for {challenge.v_hold} secondz\n' +
+                '・do {challenge.pullups} consecutive pullups' +
+                'and hang urself for {challenge.bar_hold} seconds'
+            )
+
+        async def manage(self):
+
+            if self.sends >= len(self.notification_times):
+                return
+
+            now = datetime.now()
+            sending_time = datetime.combine(date.today(), self.notification_times[self.sends])
+
+            if now >= sending_time:
+                await type_n_send(self.user, self.notification_message.format(challenge = self.schedule.for_today()))
+                self.sends += 1
+
+
+
+    async def gts_kintore_management(self):
+
+        for user_kintore in self.gts_kintore_management.assignments:
+            await user_kintore.manage()
 
 
 
@@ -530,8 +566,8 @@ class GTS(Bot):
 
 
 
-    gt_workout = kintore.WorkoutSchedule.for_gt()
-    workout_notifications_sent = 0
+
+
 
 
 
@@ -584,7 +620,7 @@ class GTS(Bot):
 
 
         # \/\/\/ 5th of April 2020 workout update \/\/\/
-
+        '''
         wn_sending_times = [tup[0]*60 + tup[1] for tup in ( (0, 0), (18, 30) )]
         if (self.workout_notifications_sent < len(wn_sending_times)):
             rn = datetime.now()
@@ -596,6 +632,37 @@ class GTS(Bot):
                     + '\n・do {challenge.pushups} consecutive pushups, then hold a plank for {challenge.v_hold} secondz\n・do {challenge.pullups} consecutive pullups and hang urself for {challenge.bar_hold} seconds'.format(challenge = self.gt_workout.for_today())
                 )
                 self.workout_notifications_sent += 1;
+        '''
+        # \/\/\/ 30th of April 2020 workout update
+        await self.gts_kintore_management()
+
+
+
+
+
+
+
+
+
+
+
+    async def on_ready(self):
+
+        GTS.__dict__['gts_kintore_management'].assignments = [
+            self.UserKintore ( self.get_user(ID_OF.GT), kintore.WorkoutSchedule.for_gt(), [time(0, 0), time(18, 30)] )
+        ]
+
+        self.logs.awoken_log() # .ready_log() works too but log_awoken looks / sounds cooler
+
+        with open('replies/presences.txt', encoding = 'UTF-8') as file:
+            presences = list(filter(bool, (line.strip() for line in file)))
+
+        while True:
+
+            for presence in presences:
+
+                await self.change_presence(activity = Game(presence))
+                await sleep(3)
 
 
 

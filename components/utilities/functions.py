@@ -39,7 +39,11 @@ def limit(iterator, count):
     'iterates maximum count elements from the iterable'
 
     while count:
-        yield next(iterator)
+
+        try:
+            yield next(iterator)
+        except StopIteration:
+            return
         count -= 1
 
 
